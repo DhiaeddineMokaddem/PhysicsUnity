@@ -324,7 +324,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adc0023ed85f0d74486c78aa83a3725d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  translationSpeedXYZ: {x: 0, y: 0, z: 0}
+  gravity: 10
+  drag: 0.1
+  dt: 0.02
   rotationSpeedXYZ: {x: 0, y: 0, z: 0}
   isLocal: 1
 --- !u!4 &647293999
