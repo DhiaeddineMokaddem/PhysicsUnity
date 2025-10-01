@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-// Handles rotation using quaternions (axis-angle math)
+// Handles rotation using quaternions (pure math, no Unity Quaternion)
 // Supports both local and global rotation modes
 public class QuaternionRotation : MonoBehaviour
 {
@@ -8,28 +8,101 @@ public class QuaternionRotation : MonoBehaviour
     public Vector3 axis = Vector3.up;
     // Rotation speed (degrees/sec, magnitude of rotationSpeedXYZ)
     public float angleSpeed;
+    // Accumulated rotation quaternion (x, y, z, w)
+    private Vector4 accumulatedQuat = new Vector4(0, 0, 0, 1); // Identity quaternion
     // Accumulated transformation matrix for rotation
     public Matrix4x4 accumulatedTransform = Matrix4x4.identity;
     // If true, apply local rotation; else global
     public bool isLocal = true;
 
-    // Applies continuous rotation using axis-angle quaternion
+    // Converts a quaternion (x, y, z, w) to a rotation matrix
+    // See: https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
+    private Matrix4x4 QuaternionToMatrix(Vector4 q)
+    {
+        float x = q.x, y = q.y, z = q.z, w = q.w;
+        float xx = x * x, yy = y * y, zz = z * z;
+        float xy = x * y, xz = x * z, yz = y * z;
+        float wx = w * x, wy = w * y, wz = w * z;
+        Matrix4x4 m = Matrix4x4.identity;
+        m.m00 = 1 - 2 * (yy + zz);
+        m.m01 = 2 * (xy - wz);
+        m.m02 = 2 * (xz + wy);
+        m.m10 = 2 * (xy + wz);
+        m.m11 = 1 - 2 * (xx + zz);
+        m.m12 = 2 * (yz - wx);
+        m.m20 = 2 * (xz - wy);
+        m.m21 = 2 * (yz + wx);
+        m.m22 = 1 - 2 * (xx + yy);
+        return m;
+    }
+
+    // Multiplies two quaternions (pure math)
+    private Vector4 MultiplyQuat(Vector4 q1, Vector4 q2)
+    {
+        float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+        float y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
+        float z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+        float w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+        return new Vector4(x, y, z, w);
+    }
+
+    // Normalizes a quaternion (pure math)
+    private Vector4 NormalizeQuat(Vector4 q)
+    {
+        float mag = Mathf.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+        if (mag < 1e-8f) return new Vector4(0, 0, 0, 1);
+        return q / mag;
+    }
+
+    // Builds a quaternion from axis and angle (radians)
+    private Vector4 AxisAngleQuat(Vector3 axis, float angle)
+    {
+        Vector3 normAxis = axis.normalized;
+        float half = angle / 2f;
+        float sinHalf = Mathf.Sin(half);
+        return new Vector4(normAxis.x * sinHalf, normAxis.y * sinHalf, normAxis.z * sinHalf, Mathf.Cos(half));
+    }
+
+    // SLERP between two quaternions using pure math
+    // q0, q1: quaternions
+    // t: interpolation parameter (0 to 1)
+    private Vector4 SlerpQuat(Vector4 q0, Vector4 q1, float t)
+    {
+        float dot = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+        // If dot < 0, negate one quaternion to take shortest path
+        if (dot < 0f) {
+            q1 = -q1;
+            dot = -dot;
+        }
+        dot = Mathf.Clamp(dot, -1f, 1f);
+        float theta = Mathf.Acos(dot);
+        if (theta < 1e-6f) return q0;
+        float sinTheta = Mathf.Sin(theta);
+        float w0 = Mathf.Sin((1 - t) * theta) / sinTheta;
+        float w1 = Mathf.Sin(t * theta) / sinTheta;
+        return NormalizeQuat(new Vector4(
+            w0 * q0.x + w1 * q1.x,
+            w0 * q0.y + w1 * q1.y,
+            w0 * q0.z + w1 * q1.z,
+            w0 * q0.w + w1 * q1.w
+        ));
+    }
+
+    // Applies continuous rotation using axis-angle quaternion (pure math)
     // Each frame, rotates by a small angle around the specified axis
     public void ApplyRotation(float t)
     {
         float dtFrame = Time.fixedDeltaTime;
-        // Calculate the incremental rotation angle for this frame (in radians)
-        float angleRad = Mathf.Deg2Rad * angleSpeed * dtFrame;
-        // Normalize axis to ensure valid quaternion
-        Vector3 normAxis = axis.normalized;
-        float halfAngle = angleRad / 2f;
-        float sinHalf = Mathf.Sin(halfAngle);
-        // Build quaternion from axis and angle
-        Quaternion q = new Quaternion(normAxis.x * sinHalf, normAxis.y * sinHalf, normAxis.z * sinHalf, Mathf.Cos(halfAngle));
-        // Apply rotation: local (post-multiply) or global (pre-multiply)
+        // Build incremental quaternion for this frame
+        Vector4 dq = AxisAngleQuat(axis, Mathf.Deg2Rad * angleSpeed * dtFrame);
+        // Update accumulated quaternion (local/global)
         if (isLocal)
-            accumulatedTransform = accumulatedTransform * Matrix4x4.Rotate(q);
+            accumulatedQuat = MultiplyQuat(accumulatedQuat, dq);
         else
-            accumulatedTransform = Matrix4x4.Rotate(q) * accumulatedTransform;
+            accumulatedQuat = MultiplyQuat(dq, accumulatedQuat);
+        accumulatedQuat = NormalizeQuat(accumulatedQuat);
+        // Convert quaternion to rotation matrix
+        accumulatedTransform = QuaternionToMatrix(accumulatedQuat);
     }
+
 }
