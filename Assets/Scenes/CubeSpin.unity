@@ -249,9 +249,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 647293999}
-  - component: {fileID: 647293998}
   - component: {fileID: 647293997}
   - component: {fileID: 647293996}
+  - component: {fileID: 647293998}
+  - component: {fileID: 647294002}
+  - component: {fileID: 647294001}
+  - component: {fileID: 647294000}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -327,8 +330,13 @@ MonoBehaviour:
   gravity: 10
   drag: 0.1
   dt: 0.02
+  startPosition: {x: 0, y: 10.16, z: 0}
   rotationSpeedXYZ: {x: 0, y: 0, z: 0}
   isLocal: 1
+  useQuaternion: 1
+  meshScript: {fileID: 647294002}
+  eulerScript: {fileID: 647294001}
+  quatScript: {fileID: 647294000}
 --- !u!4 &647293999
 Transform:
   m_ObjectHideFlags: 0
@@ -344,6 +352,101 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &647294000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 647293995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9ecd0a4613e4fd5beac15523ddbb876, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  axis: {x: 0, y: 1, z: 0}
+  angleSpeed: 0
+  q0: {x: 0, y: 0, z: 0, w: 1}
+  q1: {x: 0, y: 0, z: 0, w: 1}
+  accumulatedTransform:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  isLocal: 1
+--- !u!114 &647294001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 647293995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6a189c343874742bdd7eb2536b8844c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSpeedXYZ: {x: 0, y: 0, z: 0}
+  accumulatedTransform:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+--- !u!114 &647294002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 647293995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 276e6045e2d642ca9d3f056e885e5601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseVertices: []
+  triangles: 
+  meshTransform:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
 --- !u!1 &1433123189
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,7 +525,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 5
+  m_Time: 1
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -432,7 +535,7 @@ TrailRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 1
+        value: 0.36566162
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -497,6 +600,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cube: {fileID: 647293998}
+  meshScript: {fileID: 647294002}
 --- !u!1 &1470388205
 GameObject:
   m_ObjectHideFlags: 0

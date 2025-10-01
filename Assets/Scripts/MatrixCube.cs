@@ -1,161 +1,118 @@
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+// Main controller for the physics-based cube
+// Handles free fall, rotation (Euler or Quaternion), and mesh updates
+[RequireComponent(typeof(MatrixCubeMesh))]
 public class MatrixCube : MonoBehaviour
 {
+    // --- Physics settings ---
     [Header("Free fall settings")]
-    [SerializeField] float gravity = 9.81f;   // Gravity strength
-    [SerializeField] float drag = 0.1f;       // Drag coefficient
-    [SerializeField] float dt = 0.02f;        // Fixed timestep for Euler
+    [SerializeField] float gravity = 9.81f; // Gravity strength (m/s^2)
+    [SerializeField] float drag = 0.1f;     // Drag coefficient
+    [SerializeField] float dt = 0.02f;      // Fixed timestep for Euler integration
 
-    private Vector3 velocity;   
-    private Vector3 position;  
+    // Set initial position in editor
+    [Header("Initial position")]
+    public Vector3 startPosition = Vector3.zero;
 
+    // Internal state for velocity and position
+    [SerializeField] private Vector3 velocity; // Current velocity of the cube
+    [SerializeField] private Vector3 position; // Current position of the cube
+
+    // --- Rotation settings ---
     [Header("Rotation speeds (degrees/sec)")]
-    [SerializeField] Vector3 rotationSpeedXYZ = Vector3.zero;
+    [SerializeField] Vector3 rotationSpeedXYZ = Vector3.zero; // Euler rotation speeds (X, Y, Z)
     [Header("Transform type")]
-    [SerializeField] bool isLocal = true;
+    [SerializeField] bool isLocal = true; // If true, use local rotation; else global
+    [Header("Rotation mode")]
+    [SerializeField] bool useQuaternion = false; // If true, use quaternion rotation; else Euler
 
-    private Vector3[] baseVertices;
-    private int[] triangles;
-    private Matrix4x4 accumulatedTransform = Matrix4x4.identity;
+    // --- Script references ---
+    [Header("script references")]
+    [SerializeField] private MatrixCubeMesh meshScript; // Handles mesh rendering
+    [SerializeField] private EulerRotation eulerScript; // Handles Euler rotation
+    [SerializeField] private QuaternionRotation quatScript; // Handles Quaternion rotation
 
+    private bool landed = false; // True when cube hits the ground
+
+    // Called once at the start
+    // Initializes velocity, position, and fetches required script references
     void Start()
     {
-        // Initial conditions
         velocity = Vector3.zero;
-        position = Vector3.zero;
-
-        // Define cube vertices
-        baseVertices = new Vector3[]
-        {
-            new Vector3(-0.5f, -0.5f, -0.5f),
-            new Vector3( 0.5f, -0.5f, -0.5f),
-            new Vector3( 0.5f,  0.5f, -0.5f),
-            new Vector3(-0.5f,  0.5f, -0.5f),
-            new Vector3(-0.5f, -0.5f,  0.5f),
-            new Vector3( 0.5f, -0.5f,  0.5f),
-            new Vector3( 0.5f,  0.5f,  0.5f),
-            new Vector3(-0.5f,  0.5f,  0.5f)
-        };
-
-        // Define faces
-        triangles = new int[]
-        {
-            0, 2, 1, 0, 3, 2,   // Back
-            4, 5, 6, 4, 6, 7,   // Front
-            0, 1, 5, 0, 5, 4,   // Bottom
-            2, 3, 7, 2, 7, 6,   // Top
-            0, 4, 7, 0, 7, 3,   // Left
-            1, 2, 6, 1, 6, 5    // Right
-        };
+        position = startPosition; // Set initial position from editor
+        // Auto-fetch references if not assigned in inspector
+        if (meshScript == null)
+            meshScript = GetComponent<MatrixCubeMesh>();
+        if (eulerScript == null)
+            eulerScript = GetComponent<EulerRotation>();
+        if (quatScript == null)
+            quatScript = GetComponent<QuaternionRotation>();
     }
 
+    // Called every physics frame
+    // Handles physics, rotation, and mesh update
     void FixedUpdate()
     {
-        // Freefall drag 
-        Vector3 acceleration = Vector3.down * gravity - drag * velocity;
-        velocity += acceleration * dt;   // v(t+dt) = v(t) + a*dt
-        position += velocity * dt;       // p(t+dt) = p(t) + v*dt
+        // --- Physics: Free fall with drag ---
+        // Only update position/velocity if not landed
+        if (!landed)
+        {
+            // Calculate acceleration due to gravity and drag
+            Vector3 acceleration = Vector3.down * gravity - drag * velocity;
+            velocity += acceleration * dt; // Update velocity
+            position += velocity * dt;     // Update position
+            // --- Stop cube at ground (y=0) ---
+            if (position.y <= 0f)
+            {
+                position.y = 0f;
+                velocity = Vector3.zero;
+                landed = true; // Mark as landed
+            }
+        }
 
-        // Build translation from position
+        // --- Build translation matrix from position ---
+        // This matrix moves the cube to its current position
         Matrix4x4 T = Matrix4x4.identity;
         T.m03 = position.x;
         T.m13 = position.y;
         T.m23 = position.z;
 
-        // Rotation handling
-        if (isLocal)
-            ApplyLocalTransform(T);
-        else
-            ApplyGlobalTransform(T);
+        // --- Update rotation parameters from inspector ---
+        // Euler: rotationSpeedXYZ is used directly
+        if (eulerScript != null)
+            eulerScript.rotationSpeedXYZ = rotationSpeedXYZ;
+        // Quaternion: axis is direction, angleSpeed is magnitude
+        if (quatScript != null)
+        {
+            // Use all axes for quaternion rotation
+            quatScript.axis = rotationSpeedXYZ.normalized;
+            quatScript.angleSpeed = rotationSpeedXYZ.magnitude;
+        }
 
-        // Build final mesh
-        Mesh mesh = new Mesh();
-        Vector3[] transformed = new Vector3[baseVertices.Length];
-        for (int i = 0; i < baseVertices.Length; i++)
-            transformed[i] = accumulatedTransform.MultiplyPoint3x4(baseVertices[i]);
-
-        mesh.vertices = transformed;
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
-        GetComponent<MeshFilter>().mesh = mesh;
-    }
-
-    // --------------------
-    // LOCAL TRANSFORM
-    // --------------------
-    void ApplyLocalTransform(Matrix4x4 T)
-    {
-        float dtFrame = Time.fixedDeltaTime;
-        float alpha = Mathf.Deg2Rad * rotationSpeedXYZ.y * dtFrame;
-        float beta = Mathf.Deg2Rad * rotationSpeedXYZ.x * dtFrame;
-        float gamma = Mathf.Deg2Rad * rotationSpeedXYZ.z * dtFrame;
-
-        Matrix4x4 Rx = new Matrix4x4(
-            new Vector4(1, 0, 0, 0),
-            new Vector4(0, Mathf.Cos(beta), -Mathf.Sin(beta), 0),
-            new Vector4(0, Mathf.Sin(beta), Mathf.Cos(beta), 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        Matrix4x4 Ry = new Matrix4x4(
-            new Vector4(Mathf.Cos(alpha), 0, Mathf.Sin(alpha), 0),
-            new Vector4(0, 1, 0, 0),
-            new Vector4(-Mathf.Sin(alpha), 0, Mathf.Cos(alpha), 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        Matrix4x4 Rz = new Matrix4x4(
-            new Vector4(Mathf.Cos(gamma), -Mathf.Sin(gamma), 0, 0),
-            new Vector4(Mathf.Sin(gamma), Mathf.Cos(gamma), 0, 0),
-            new Vector4(0, 0, 1, 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        accumulatedTransform = T * accumulatedTransform * (Ry * Rx * Rz);
-    }
-
-    // --------------------
-    // GLOBAL TRANSFORM
-    // --------------------
-    void ApplyGlobalTransform(Matrix4x4 T)
-    {
-        float dtFrame = Time.fixedDeltaTime;
-        float alpha = Mathf.Deg2Rad * rotationSpeedXYZ.y * dtFrame;
-        float beta = Mathf.Deg2Rad * rotationSpeedXYZ.x * dtFrame;
-        float gamma = Mathf.Deg2Rad * rotationSpeedXYZ.z * dtFrame;
-
-        Matrix4x4 Rx = new Matrix4x4(
-            new Vector4(1, 0, 0, 0),
-            new Vector4(0, Mathf.Cos(beta), -Mathf.Sin(beta), 0),
-            new Vector4(0, Mathf.Sin(beta), Mathf.Cos(beta), 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        Matrix4x4 Ry = new Matrix4x4(
-            new Vector4(Mathf.Cos(alpha), 0, Mathf.Sin(alpha), 0),
-            new Vector4(0, 1, 0, 0),
-            new Vector4(-Mathf.Sin(alpha), 0, Mathf.Cos(alpha), 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        Matrix4x4 Rz = new Matrix4x4(
-            new Vector4(Mathf.Cos(gamma), -Mathf.Sin(gamma), 0, 0),
-            new Vector4(Mathf.Sin(gamma), Mathf.Cos(gamma), 0, 0),
-            new Vector4(0, 0, 1, 0),
-            new Vector4(0, 0, 0, 1)
-        );
-
-        accumulatedTransform = T * (Ry * Rx * Rz) * accumulatedTransform;
-    }
-
-    // Get transformed vertices in world coordinates
-    public Vector3[] GetTransformedVertices()
-    {
-        Vector3[] transformed = new Vector3[baseVertices.Length];
-        for (int i = 0; i < baseVertices.Length; i++)
-            transformed[i] = accumulatedTransform.MultiplyPoint3x4(baseVertices[i]);
-        return transformed;
+        // --- Rotation handling ---
+        // Combine translation and rotation into final transform
+        Matrix4x4 finalTransform = T;
+        // Always apply rotation, even when landed
+        if (useQuaternion && quatScript != null)
+        {
+            // Apply quaternion rotation (continuous axis-angle)
+            float t = Time.time;
+            quatScript.ApplyRotation(t);
+            finalTransform *= quatScript.accumulatedTransform;
+        }
+        else if (eulerScript != null)
+        {
+            // Apply Euler rotation (local/global)
+            if (isLocal)
+                eulerScript.ApplyLocalRotation();
+            else
+                eulerScript.ApplyGlobalRotation();
+            finalTransform *= eulerScript.accumulatedTransform;
+        }
+        // --- Update mesh with new transform ---
+        // This visually updates the cube in the scene
+        if (meshScript != null)
+            meshScript.UpdateMesh(finalTransform);
     }
 }

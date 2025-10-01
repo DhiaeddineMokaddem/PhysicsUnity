@@ -1,14 +1,28 @@
 using System;
 using UnityEngine;
 
+// Follows the center of the cube by reading its mesh vertices
+// Useful for visualizing the cube's trajectory
 public class TrailFollow : MonoBehaviour
 {
-    public MatrixCube cube;
+    public MatrixCube cube; // Reference to the main cube controller
+    public MatrixCubeMesh meshScript; // Reference to the mesh script
 
-   //calculate the center of the cube
+    // Set trail position to cube's initial position before rendering
+    // Ensures the trail starts at the correct location
+    void Start()
+    {
+        if (cube != null)
+            transform.position = cube.startPosition;
+        else
+            transform.position = GetCubeCenter(); // fallback if cube reference missing
+    }
+
+    // Calculates the center of the cube by averaging its transformed vertices
+    // Used to follow the cube's movement
     public Vector3 GetCubeCenter()
     {
-        Vector3[] vertices = cube.GetTransformedVertices();
+        Vector3[] vertices = meshScript.GetTransformedVertices();
         Vector3 center = Vector3.zero;
         foreach (Vector3 v in vertices)
         {
@@ -18,9 +32,9 @@ public class TrailFollow : MonoBehaviour
         return center;
     }
 
+    // Moves this object to follow the cube's center every frame
     void Update()
     {
-        // Move this object to follow the cube's center
         transform.position = GetCubeCenter();
     }
 }
