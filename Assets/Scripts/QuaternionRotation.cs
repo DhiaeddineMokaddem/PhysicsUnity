@@ -16,7 +16,6 @@ public class QuaternionRotation : MonoBehaviour
     public bool isLocal = true;
 
     // Converts a quaternion (x, y, z, w) to a rotation matrix
-    // See: https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
     private Matrix4x4 QuaternionToMatrix(Vector4 q)
     {
         float x = q.x, y = q.y, z = q.z, w = q.w;
@@ -36,7 +35,7 @@ public class QuaternionRotation : MonoBehaviour
         return m;
     }
 
-    // Multiplies two quaternions (pure math)
+    // Multiplies two quaternions
     private Vector4 MultiplyQuat(Vector4 q1, Vector4 q2)
     {
         float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
@@ -46,7 +45,7 @@ public class QuaternionRotation : MonoBehaviour
         return new Vector4(x, y, z, w);
     }
 
-    // Normalizes a quaternion (pure math)
+    // Normalizes a quaternion
     private Vector4 NormalizeQuat(Vector4 q)
     {
         float mag = Mathf.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
@@ -88,6 +87,23 @@ public class QuaternionRotation : MonoBehaviour
         ));
     }
 
+    // Rotates a 3D point using quaternion: P' = q · P · q⁻¹
+    // P is (0, x, y, z), q is (x, y, z, w)
+    // Returns rotated Vector3
+    public Vector3 RotatePointByQuaternion(Vector3 point, Vector4 quat)
+    {
+        // Convert point to pure quaternion (0, x, y, z)
+        Vector4 p = new Vector4(point.x, point.y, point.z, 0f);
+        // Compute q⁻¹ (conjugate)
+        Vector4 qConj = new Vector4(-quat.x, -quat.y, -quat.z, quat.w);
+        // Compute q · p
+        Vector4 qp = MultiplyQuat(quat, p);
+        // Compute (q · p) · q⁻¹
+        Vector4 result = MultiplyQuat(qp, qConj);
+        // Return vector part (x, y, z)
+        return new Vector3(result.x, result.y, result.z);
+    }
+
     // Applies continuous rotation using axis-angle quaternion (pure math)
     // Each frame, rotates by a small angle around the specified axis
     public void ApplyRotation(float t)
@@ -101,8 +117,18 @@ public class QuaternionRotation : MonoBehaviour
         else
             accumulatedQuat = MultiplyQuat(dq, accumulatedQuat);
         accumulatedQuat = NormalizeQuat(accumulatedQuat);
-        // Convert quaternion to rotation matrix
+        // Build rotation matrix for compatibility (not used for mesh anymore)
         accumulatedTransform = QuaternionToMatrix(accumulatedQuat);
+    }
+
+    // Rotates all mesh vertices using pure quaternion math
+    // Call this from your mesh script instead of using a matrix
+    public Vector3[] RotateVertices(Vector3[] vertices)
+    {
+        Vector3[] rotated = new Vector3[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+            rotated[i] = RotatePointByQuaternion(vertices[i], accumulatedQuat);
+        return rotated;
     }
 
 }
