@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Main controller for the physics-based cube
 // Handles free fall, rotation (Euler or Quaternion), and mesh updates
-[RequireComponent(typeof(MatrixCubeMesh))]
+[RequireComponent(typeof(MatrixCubeMeshDhiadeddineMokaddem))]
 public class MatrixCube : MonoBehaviour
 {
     // --- Physics settings ---
@@ -29,7 +29,7 @@ public class MatrixCube : MonoBehaviour
 
     // --- Script references ---
     [Header("script references")]
-    [SerializeField] private MatrixCubeMesh meshScript; // Handles mesh rendering
+    [SerializeField] private MatrixCubeMeshDhiadeddineMokaddem meshScript; // Handles mesh rendering
     [SerializeField] private EulerRotation eulerScript; // Handles Euler rotation
     [SerializeField] private QuaternionRotation quatScript; // Handles Quaternion rotation
 
@@ -43,7 +43,7 @@ public class MatrixCube : MonoBehaviour
         position = startPosition; // Set initial position from editor
         // Auto-fetch references if not assigned in inspector
         if (meshScript == null)
-            meshScript = GetComponent<MatrixCubeMesh>();
+            meshScript = GetComponent<MatrixCubeMeshDhiadeddineMokaddem>();
         if (eulerScript == null)
             eulerScript = GetComponent<EulerRotation>();
         if (quatScript == null)

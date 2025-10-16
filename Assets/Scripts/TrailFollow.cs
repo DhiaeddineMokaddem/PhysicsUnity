@@ -6,7 +6,7 @@ using UnityEngine;
 public class TrailFollow : MonoBehaviour
 {
     public MatrixCube cube; // Reference to the main cube controller
-    public MatrixCubeMesh meshScript; // Reference to the mesh script
+    public MatrixCubeMeshDhiadeddineMokaddem meshScript; // Reference to the mesh script
 
     // Set trail position to cube's initial position before rendering
     // Ensures the trail starts at the correct location

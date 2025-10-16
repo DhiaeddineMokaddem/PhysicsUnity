@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MatrixRaycastTester : MonoBehaviour
+public class MatrixRaycastTesterDhiaeddineMokaddem : MonoBehaviour
 {
     [Header("Ray Settings")]
     public Vector3 direction = Vector3.forward;
@@ -8,7 +8,7 @@ public class MatrixRaycastTester : MonoBehaviour
     public float rayLength = 10f;
 
     [Header("References")]
-    public MatrixCubeMesh cubeMesh;
+    public MatrixCubeMeshDhiadeddineMokaddem cubeMesh;
 
     private Vector3? hitPoint;
 

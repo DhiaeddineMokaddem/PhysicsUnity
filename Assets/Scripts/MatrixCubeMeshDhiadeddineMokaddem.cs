@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 // Handles mesh creation and transformation for the cube
 // Separates mesh logic from rotation and physics
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class MatrixCubeMesh : MonoBehaviour
+public class MatrixCubeMeshDhiadeddineMokaddem : MonoBehaviour
 {
     // Base vertices of the cube (local space)
     public Vector3[] baseVertices;
