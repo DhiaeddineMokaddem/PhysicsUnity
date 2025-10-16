@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UIElements;
 
 // Handles mesh creation and transformation for the cube
 // Separates mesh logic from rotation and physics
@@ -39,7 +40,11 @@ public class MatrixCubeMesh : MonoBehaviour
             1, 2, 6, 1, 6, 5
         };
     }
-
+    private void Start()
+    {
+        Matrix4x4 T = Matrix4x4.identity;
+        UpdateMesh(T);
+    }
     // Updates the mesh vertices using the given transformation matrix
     // This is called every frame to animate the cube
     public void UpdateMesh(Matrix4x4 transform)
