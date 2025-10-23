@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class RaycastNourBenYounesTP : MonoBehaviour
+public class RaycastTP : MonoBehaviour
 {
     [Header("Cube Settings")]
     public Vector3 cubeWorldPosition = Vector3.zero; // Cube fixed in world
