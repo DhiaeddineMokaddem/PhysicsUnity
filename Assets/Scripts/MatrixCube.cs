@@ -34,7 +34,7 @@ public class MatrixCube : MonoBehaviour
     [SerializeField] private QuaternionRotation quatScript; // Handles Quaternion rotation
 
     private bool landed = false; // True when cube hits the ground
-
+    public float e = 0;
     // Called once at the start
     // Initializes velocity, position, and fetches required script references
     void Start()
@@ -66,8 +66,8 @@ public class MatrixCube : MonoBehaviour
             if (position.y <= 0f)
             {
                 position.y = 0f;
-                velocity = Vector3.zero;
-                landed = true; // Mark as landed
+                velocity = -e * velocity; /// added bouncing with e
+               // landed = true; // Mark as landed
             }
         }
 
