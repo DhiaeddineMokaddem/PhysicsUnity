@@ -328,15 +328,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gravity: 10
-  drag: 0.1
+  drag: 0
   dt: 0.02
   startPosition: {x: 0, y: 10.16, z: 0}
+  velocity: {x: 0, y: 0, z: 0}
+  position: {x: 0, y: 0, z: 0}
   rotationSpeedXYZ: {x: 0, y: 0, z: 0}
   isLocal: 1
   useQuaternion: 1
   meshScript: {fileID: 647294002}
   eulerScript: {fileID: 647294001}
   quatScript: {fileID: 647294000}
+  e: 1
 --- !u!4 &647293999
 Transform:
   m_ObjectHideFlags: 0
@@ -366,8 +369,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
   angleSpeed: 0
-  q0: {x: 0, y: 0, z: 0, w: 1}
-  q1: {x: 0, y: 0, z: 0, w: 1}
   accumulatedTransform:
     e00: 1
     e01: 0
