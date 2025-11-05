@@ -45,12 +45,10 @@ public class AdaptedPhysicsManager : MonoBehaviour
     void Start()
     {
         collisionDetector = gameObject.AddComponent<CollisionDetector>();
-        
         if (staticSphere == null)
         {
-            staticSphere = FindObjectOfType<StaticImpactSphere>();
+            staticSphere = FindFirstObjectByType<StaticImpactSphere>();
         }
-        
         RegisterAllBodies();
     }
 
@@ -58,10 +56,8 @@ public class AdaptedPhysicsManager : MonoBehaviour
     {
         rigidBodies.Clear();
         constraints.Clear();
-        
-        rigidBodies.AddRange(FindObjectsOfType<RigidBody3D>());
-        constraints.AddRange(FindObjectsOfType<RigidConstraint>());
-        
+        rigidBodies.AddRange(UnityEngine.Object.FindObjectsByType<RigidBody3D>(FindObjectsSortMode.None));
+        constraints.AddRange(UnityEngine.Object.FindObjectsByType<RigidConstraint>(FindObjectsSortMode.None));
         Debug.Log($"PhysicsManager: {rigidBodies.Count} corps, {constraints.Count} contraintes");
     }
 
@@ -209,25 +205,65 @@ public class AdaptedPhysicsManager : MonoBehaviour
         }
     }
 
+    // Utility: Get all 8 world-space corners of a cube
+    Vector3[] GetCubeWorldCorners(RigidBody3D body)
+    {
+        Vector3[] localCorners = new Vector3[8];
+        Vector3 halfSize = body.size * 0.5f;
+        int i = 0;
+        for (int x = -1; x <= 1; x += 2)
+        for (int y = -1; y <= 1; y += 2)
+        for (int z = -1; z <= 1; z += 2)
+            localCorners[i++] = new Vector3(x * halfSize.x, y * halfSize.y, z * halfSize.z);
+        Vector3[] worldCorners = new Vector3[8];
+        for (int j = 0; j < 8; j++)
+            worldCorners[j] = body.transform.TransformPoint(localCorners[j]);
+        return worldCorners;
+    }
+
     void HandleGroundCollisions()
     {
         foreach (var body in rigidBodies)
         {
             if (body == null || body.isKinematic) continue;
-            Vector3 pos = body.transform.position;
-            float halfHeight = body.size.y * 0.5f;
-            float bottomY = pos.y - halfHeight;
-            if (bottomY <= groundLevel)
+            Vector3[] corners = GetCubeWorldCorners(body);
+            float minPenetration = 0f;
+            float lowestY = float.MaxValue;
+            foreach (var corner in corners)
             {
-                // Correction plus forte pour éviter stuck/tunneling
-                body.transform.position = new Vector3(pos.x, groundLevel + halfHeight + 0.01f, pos.z);
-                if (body.velocity.y < 0)
+                float penetration = groundLevel - corner.y;
+                if (penetration > minPenetration)
+                    minPenetration = penetration;
+                if (corner.y < lowestY)
+                    lowestY = corner.y;
+            }
+            if (minPenetration > 0f)
+            {
+                // Snap lowest corner exactly to ground if within margin
+                float snapMargin = 0.01f;
+                float snapAmount = groundLevel - lowestY;
+                if (snapAmount > 0f && snapAmount < snapMargin)
+                {
+                    body.transform.position += Vector3.up * snapAmount;
+                }
+                else
+                {
+                    body.transform.position += Vector3.up * (minPenetration + 0.01f);
+                }
+                // Only apply restitution if velocity is significant
+                if (body.velocity.y < -0.1f)
                 {
                     body.velocity.y = -body.velocity.y * groundRestitution * globalElasticity;
                     Vector3 horizontalVel = new Vector3(body.velocity.x, 0, body.velocity.z);
                     horizontalVel *= (1f - groundFriction);
                     body.velocity = new Vector3(horizontalVel.x, body.velocity.y, horizontalVel.z);
                     body.angularVelocity *= (1f - groundFriction);
+                }
+                // If almost stopped, zero vertical velocity and angular velocity to stop vibration
+                if (Mathf.Abs(body.velocity.y) < 0.05f && body.velocity.magnitude < 0.1f && body.angularVelocity.magnitude < 0.1f)
+                {
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
                 }
             }
         }

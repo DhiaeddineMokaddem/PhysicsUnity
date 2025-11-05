@@ -14,7 +14,7 @@ public class StaticImpactSphere : MonoBehaviour
     
     [Tooltip("Coefficient de restitution (rebond)")]
     [Range(0f, 1f)]
-    public float restitution = 0.4f;
+    public float restitution = 0.7f; // Augmenté pour plus de rebond
     
     [Header("Position")]
     [Tooltip("Positionner automatiquement au niveau du sol")]
@@ -168,8 +168,8 @@ public class StaticImpactSphere : MonoBehaviour
             // Casser toutes les contraintes dans le rayon
             physicsManager.BreakConstraintsInRadius(impactPoint, breakRadius);
             
-            // Optionnel : Appliquer une petite explosion pour aider la séparation
-            float explosionForce = 100f * impactMultiplier;
+            // Explosion plus puissante pour séparer les cubes
+            float explosionForce = 500f * impactMultiplier; // Augmenté
             physicsManager.ApplyExplosion(impactPoint, breakRadius, explosionForce);
             
             Debug.Log($"  → Contraintes cassées dans rayon {breakRadius}m");
