@@ -1,8 +1,10 @@
+using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Génère une structure de cubes connectés
+/// Génère une structure de cubes connectés - VERSION PURE MATH
+/// FIXED: Proper cleanup, initialization, and settling for rebuilding
 /// </summary>
 public class StructureBuilder : MonoBehaviour
 {
@@ -10,7 +12,7 @@ public class StructureBuilder : MonoBehaviour
     public int width = 5;
     public int height = 5;
     public int depth = 5;
-    public float spacing = 1.1f; // Espacement entre les cubes
+    public float spacing = 1.1f;
     
     [Header("Propriétés des Cubes")]
     public float cubeSize = 1.0f;
@@ -18,14 +20,14 @@ public class StructureBuilder : MonoBehaviour
     public Material cubeMaterial;
     
     [Header("Propriétés des Contraintes")]
-    public float constraintStiffness = 800.0f;
-    public float constraintDamping = 40.0f;
-    public float constraintBreakForce = 80.0f;
+    public float constraintStiffness = 1200.0f;  // Increased from 800
+    public float constraintDamping = 60.0f;      // Increased from 40
+    public float constraintBreakForce = 150.0f;  // Increased from 80
     public float constraintMaxDistance = 1.5f;
     
     [Header("Construction")]
     public bool buildOnStart = true;
-    public bool connectDiagonals = false; // Connecter aussi les diagonales
+    public bool connectDiagonals = false;
     
     private List<GameObject> cubes = new List<GameObject>();
     private PhysicsManager physicsManager;
@@ -33,31 +35,48 @@ public class StructureBuilder : MonoBehaviour
     void Start()
     {
         physicsManager = FindObjectOfType<PhysicsManager>();
-        
+    
         if (buildOnStart)
         {
-            BuildStructure();
+            StartCoroutine(DelayedBuild());
         }
     }
 
+    IEnumerator DelayedBuild()
+    {
+        yield return new WaitForSeconds(0.02f); // wait 1 second
+        BuildStructure();
+    }
+
+
     /// <summary>
-    /// Construit la structure complète
+    /// Construit la structure complète - PURE MATH
+    /// FIXED: Pauses physics during construction and ensures proper initialization
     /// </summary>
     public void BuildStructure()
     {
+        // Force pause physics during construction
+        bool wasPaused = false;
+        if (physicsManager != null)
+        {
+            wasPaused = physicsManager.pauseSimulation;
+            physicsManager.pauseSimulation = true;
+        }
+        
         ClearStructure();
         
         Debug.Log($"Construction d'une structure {width}x{height}x{depth}...");
         
-        // Créer les cubes
         RigidBody3D[,,] cubeGrid = new RigidBody3D[width, height, depth];
         
+        // Create all cubes first
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 for (int z = 0; z < depth; z++)
                 {
+                    // PURE MATH: Calcul manuel de position
                     Vector3 position = new Vector3(
                         (x - width / 2f) * spacing,
                         y * spacing,
@@ -69,62 +88,101 @@ public class StructureBuilder : MonoBehaviour
                     
                     RigidBody3D body = cube.GetComponent<RigidBody3D>();
                     cubeGrid[x, y, z] = body;
+                    
+                    // Ensure zero velocity
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
                 }
             }
         }
         
-        // Créer les contraintes
-        CreateConstraints(cubeGrid);
-        
-        // Enregistrer dans le PhysicsManager
+        // Register all bodies before creating constraints
         if (physicsManager != null)
         {
             physicsManager.RegisterAllBodies();
         }
         
+        // Now create constraints with proper initialization
+        CreateConstraints(cubeGrid);
+        
+        // Wait one frame before resuming physics
+        StartCoroutine(ResumePhysicsAfterBuild(wasPaused));
+        
         Debug.Log($"Structure construite: {cubes.Count} cubes créés");
+    }
+    
+    /// <summary>
+    /// Resume physics after a short delay to ensure everything is settled
+    /// </summary>
+    System.Collections.IEnumerator ResumePhysicsAfterBuild(bool wasPaused)
+    {
+        // Wait for physics to settle
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        
+        // Ensure all velocities are zero
+        foreach (GameObject cube in cubes)
+        {
+            if (cube != null)
+            {
+                RigidBody3D body = cube.GetComponent<RigidBody3D>();
+                if (body != null)
+                {
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+            }
+        }
+        
+        // Resume physics if it wasn't paused before
+        if (physicsManager != null)
+        {
+            physicsManager.pauseSimulation = wasPaused;
+        }
     }
 
     /// <summary>
-    /// Crée un cube individuel
+    /// Crée un cube individuel - PURE MATH
+    /// FIXED: Uses InitializePosition to ensure proper setup before Awake()
     /// </summary>
     GameObject CreateCube(Vector3 position, Vector3 size)
     {
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        
+        // Set transform first
         cube.transform.position = position;
         cube.transform.localScale = size;
         cube.transform.parent = transform;
         cube.name = $"Cube_{cubes.Count}";
         
-        // Retirer le Collider par défaut
         Collider collider = cube.GetComponent<Collider>();
         if (collider != null)
         {
-            Destroy(collider);
+            DestroyImmediate(collider);
         }
         
-        // Ajouter notre RigidBody personnalisé
         RigidBody3D body = cube.AddComponent<RigidBody3D>();
         body.mass = cubeMass;
         body.size = size;
         
-        // Appliquer le matériau
+        // CRITICAL FIX: Use InitializePosition method to set everything at once
+        // This happens before Awake(), preventing initialization issues
+        body.InitializePosition(position, Quaternion.identity, size);
+        body.velocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        
         if (cubeMaterial != null)
         {
             cube.GetComponent<Renderer>().material = cubeMaterial;
         }
         else
         {
-            // Matériau par défaut avec une couleur aléatoire
             cube.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 0.5f, 1f, 0.5f, 1f);
         }
         
         return cube;
     }
 
-    /// <summary>
-    /// Crée les contraintes entre les cubes
-    /// </summary>
     void CreateConstraints(RigidBody3D[,,] cubeGrid)
     {
         for (int x = 0; x < width; x++)
@@ -135,18 +193,14 @@ public class StructureBuilder : MonoBehaviour
                 {
                     RigidBody3D current = cubeGrid[x, y, z];
                     
-                    // Connexions orthogonales (6 directions)
-                    ConnectIfValid(current, cubeGrid, x + 1, y, z); // Droite
-                    ConnectIfValid(current, cubeGrid, x, y + 1, z); // Haut
-                    ConnectIfValid(current, cubeGrid, x, y, z + 1); // Avant
+                    ConnectIfValid(current, cubeGrid, x + 1, y, z);
+                    ConnectIfValid(current, cubeGrid, x, y + 1, z);
+                    ConnectIfValid(current, cubeGrid, x, y, z + 1);
                     
                     if (connectDiagonals)
                     {
-                        // Connexions diagonales dans le plan horizontal
                         ConnectIfValid(current, cubeGrid, x + 1, y, z + 1);
                         ConnectIfValid(current, cubeGrid, x + 1, y, z - 1);
-                        
-                        // Connexions diagonales verticales
                         ConnectIfValid(current, cubeGrid, x + 1, y + 1, z);
                         ConnectIfValid(current, cubeGrid, x, y + 1, z + 1);
                         ConnectIfValid(current, cubeGrid, x + 1, y + 1, z + 1);
@@ -159,9 +213,6 @@ public class StructureBuilder : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Crée une contrainte si les indices sont valides
-    /// </summary>
     void ConnectIfValid(RigidBody3D bodyA, RigidBody3D[,,] grid, int x, int y, int z)
     {
         if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
@@ -172,12 +223,13 @@ public class StructureBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Crée une contrainte entre deux corps
+    /// Crée une contrainte - PURE MATH
+    /// FIXED: Properly initialize constraint after setting parameters
     /// </summary>
     void CreateConstraint(RigidBody3D bodyA, RigidBody3D bodyB)
     {
-        // Point de connexion (milieu entre les deux cubes)
-        Vector3 connectionPoint = (bodyA.transform.position + bodyB.transform.position) * 0.5f;
+        // PURE MATH: Calcul manuel du point de connexion
+        Vector3 connectionPoint = (bodyA.position + bodyB.position) * 0.5f;
         
         GameObject constraintObj = new GameObject($"Constraint_{bodyA.name}_{bodyB.name}");
         constraintObj.transform.position = connectionPoint;
@@ -190,43 +242,69 @@ public class StructureBuilder : MonoBehaviour
         constraint.damping = constraintDamping;
         constraint.breakForce = constraintBreakForce;
         constraint.maxDistance = constraintMaxDistance;
+        
+        // Initialize the constraint immediately with correct rest length
+        constraint.Initialize();
     }
 
     /// <summary>
-    /// Efface la structure existante
+    /// FIXED: Properly clears and waits before starting new construction
     /// </summary>
     public void ClearStructure()
     {
-        foreach (GameObject cube in cubes)
+        // Pause physics during clearing
+        if (physicsManager != null)
         {
-            if (cube != null)
-            {
-                Destroy(cube);
-            }
+            physicsManager.pauseSimulation = true;
         }
-        cubes.Clear();
         
-        // Détruire aussi les contraintes
+        // Clear constraints first
         RigidConstraint[] constraints = GetComponentsInChildren<RigidConstraint>();
         foreach (var constraint in constraints)
         {
             if (constraint != null)
             {
-                Destroy(constraint.gameObject);
+                DestroyImmediate(constraint.gameObject);
             }
+        }
+        
+        // Then clear cubes
+        foreach (GameObject cube in cubes)
+        {
+            if (cube != null)
+            {
+                DestroyImmediate(cube);
+            }
+        }
+        cubes.Clear();
+        
+        // Force physics manager to update its lists
+        if (physicsManager != null)
+        {
+            physicsManager.RegisterAllBodies();
         }
     }
 
     /// <summary>
-    /// Construit une structure pyramidale
+    /// Construit une pyramide - PURE MATH
+    /// FIXED: Pauses physics during construction and ensures proper initialization
     /// </summary>
     public void BuildPyramid(int baseSize, float cubeSpacing)
     {
+        // Pause physics during construction
+        bool wasPaused = false;
+        if (physicsManager != null)
+        {
+            wasPaused = physicsManager.pauseSimulation;
+            physicsManager.pauseSimulation = true;
+        }
+        
         ClearStructure();
         spacing = cubeSpacing;
         
         List<RigidBody3D> allBodies = new List<RigidBody3D>();
         
+        // Create all cubes first
         for (int level = 0; level < baseSize; level++)
         {
             int levelSize = baseSize - level;
@@ -236,6 +314,7 @@ public class StructureBuilder : MonoBehaviour
             {
                 for (int z = 0; z < levelSize; z++)
                 {
+                    // PURE MATH: Calcul manuel
                     Vector3 position = new Vector3(
                         (x - levelSize / 2f) * spacing,
                         yPos,
@@ -244,17 +323,29 @@ public class StructureBuilder : MonoBehaviour
                     
                     GameObject cube = CreateCube(position, new Vector3(cubeSize, cubeSize, cubeSize));
                     cubes.Add(cube);
-                    allBodies.Add(cube.GetComponent<RigidBody3D>());
+                    
+                    RigidBody3D body = cube.GetComponent<RigidBody3D>();
+                    allBodies.Add(body);
+                    
+                    // Ensure zero velocity
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
                 }
             }
         }
         
-        // Créer les contraintes entre cubes proches
+        // Register bodies before creating constraints
+        if (physicsManager != null)
+        {
+            physicsManager.RegisterAllBodies();
+        }
+        
+        // Create constraints with proper distances
         for (int i = 0; i < allBodies.Count; i++)
         {
             for (int j = i + 1; j < allBodies.Count; j++)
             {
-                float dist = Vector3.Distance(allBodies[i].transform.position, allBodies[j].transform.position);
+                float dist = Vector3.Distance(allBodies[i].position, allBodies[j].position);
                 if (dist < spacing * 1.5f)
                 {
                     CreateConstraint(allBodies[i], allBodies[j]);
@@ -262,23 +353,31 @@ public class StructureBuilder : MonoBehaviour
             }
         }
         
-        if (physicsManager != null)
-        {
-            physicsManager.RegisterAllBodies();
-        }
+        // Wait before resuming physics
+        StartCoroutine(ResumePhysicsAfterBuild(wasPaused));
         
         Debug.Log($"Pyramide construite: {cubes.Count} cubes");
     }
 
     /// <summary>
-    /// Construit une tour
+    /// Construit une tour - PURE MATH
+    /// FIXED: Pauses physics during construction and ensures proper initialization
     /// </summary>
     public void BuildTower(int levels, int cubesPerLevel)
     {
+        // Pause physics during construction
+        bool wasPaused = false;
+        if (physicsManager != null)
+        {
+            wasPaused = physicsManager.pauseSimulation;
+            physicsManager.pauseSimulation = true;
+        }
+        
         ClearStructure();
         
         List<RigidBody3D> allBodies = new List<RigidBody3D>();
         
+        // Create all cubes first
         for (int y = 0; y < levels; y++)
         {
             float angle = (y % 2 == 0) ? 0f : 90f;
@@ -286,6 +385,8 @@ public class StructureBuilder : MonoBehaviour
             for (int i = 0; i < cubesPerLevel; i++)
             {
                 float offset = (i - cubesPerLevel / 2f) * spacing;
+                
+                // PURE MATH: Calcul trigonométrique manuel
                 Vector3 position = new Vector3(
                     Mathf.Cos(angle * Mathf.Deg2Rad) * offset,
                     y * spacing,
@@ -294,16 +395,28 @@ public class StructureBuilder : MonoBehaviour
                 
                 GameObject cube = CreateCube(position, new Vector3(cubeSize, cubeSize, cubeSize));
                 cubes.Add(cube);
-                allBodies.Add(cube.GetComponent<RigidBody3D>());
+                
+                RigidBody3D body = cube.GetComponent<RigidBody3D>();
+                allBodies.Add(body);
+                
+                // Ensure zero velocity
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
             }
         }
         
-        // Connecter les cubes proches
+        // Register bodies before creating constraints
+        if (physicsManager != null)
+        {
+            physicsManager.RegisterAllBodies();
+        }
+        
+        // Create constraints
         for (int i = 0; i < allBodies.Count; i++)
         {
             for (int j = i + 1; j < allBodies.Count; j++)
             {
-                float dist = Vector3.Distance(allBodies[i].transform.position, allBodies[j].transform.position);
+                float dist = Vector3.Distance(allBodies[i].position, allBodies[j].position);
                 if (dist < spacing * 2f)
                 {
                     CreateConstraint(allBodies[i], allBodies[j]);
@@ -311,17 +424,14 @@ public class StructureBuilder : MonoBehaviour
             }
         }
         
-        if (physicsManager != null)
-        {
-            physicsManager.RegisterAllBodies();
-        }
+        // Wait before resuming physics
+        StartCoroutine(ResumePhysicsAfterBuild(wasPaused));
         
         Debug.Log($"Tour construite: {cubes.Count} cubes");
     }
 
     void OnDrawGizmos()
     {
-        // Visualiser la zone de construction
         Gizmos.color = new Color(0f, 1f, 0f, 0.2f);
         Vector3 center = new Vector3(0, height * spacing / 2f, 0);
         Vector3 size = new Vector3(width * spacing, height * spacing, depth * spacing);

@@ -23,7 +23,7 @@ public struct CollisionInfo
 }
 
 /// <summary>
-/// Système de détection et résolution de collisions
+/// Système de détection et résolution de collisions - VERSION PURE MATH
 /// </summary>
 public class CollisionDetector : MonoBehaviour
 {
@@ -34,32 +34,31 @@ public class CollisionDetector : MonoBehaviour
     private List<CollisionInfo> collisions = new List<CollisionInfo>();
 
     /// <summary>
-    /// Détecte les collisions entre deux cubes (AABB orienté)
+    /// Détecte les collisions entre deux cubes (AABB orienté) - PURE MATH
     /// </summary>
     public bool DetectCubeCollision(RigidBody3D cubeA, RigidBody3D cubeB, out CollisionInfo collision)
     {
         collision = new CollisionInfo();
         
-        // Utiliser le test des axes séparés (SAT) pour AABB orientés
-        Vector3 centerA = cubeA.transform.position;
-        Vector3 centerB = cubeB.transform.position;
+        // PURE MATH: Utiliser les positions et rotations stockées
+        Vector3 centerA = cubeA.position;
+        Vector3 centerB = cubeB.position;
         
         Vector3 delta = centerB - centerA;
         
-        // Axes du cube A
+        // PURE MATH: Axes calculés depuis les quaternions
         Vector3[] axesA = new Vector3[]
         {
-            cubeA.transform.right,
-            cubeA.transform.up,
-            cubeA.transform.forward
+            cubeA.GetRight(),
+            cubeA.GetUp(),
+            cubeA.GetForward()
         };
         
-        // Axes du cube B
         Vector3[] axesB = new Vector3[]
         {
-            cubeB.transform.right,
-            cubeB.transform.up,
-            cubeB.transform.forward
+            cubeB.GetRight(),
+            cubeB.GetUp(),
+            cubeB.GetForward()
         };
         
         Vector3 halfSizeA = cubeA.size * 0.5f;
@@ -106,7 +105,7 @@ public class CollisionDetector : MonoBehaviour
             }
         }
         
-        // Tester les produits vectoriels des axes (9 axes supplémentaires)
+        // Tester les produits vectoriels des axes
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -135,16 +134,12 @@ public class CollisionDetector : MonoBehaviour
         if (Vector3.Dot(minAxis, delta) < 0)
             minAxis = -minAxis;
         
-        // Point de contact approximatif (au centre de la zone de chevauchement)
         Vector3 contactPoint = centerA + delta * 0.5f;
         
         collision = new CollisionInfo(cubeA, cubeB, contactPoint, minAxis, minPenetration);
         return true;
     }
 
-    /// <summary>
-    /// Projette une boîte orientée sur un axe
-    /// </summary>
     private float ProjectBoxOntoAxis(Vector3 halfSize, Vector3[] axes, Vector3 axis)
     {
         return halfSize.x * Mathf.Abs(Vector3.Dot(axes[0], axis)) +
@@ -153,24 +148,23 @@ public class CollisionDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Détecte la collision entre une sphère et un cube
+    /// Détecte la collision entre une sphère et un cube - PURE MATH
     /// </summary>
     public bool DetectSphereCollision(Vector3 sphereCenter, float sphereRadius, RigidBody3D cube, out CollisionInfo collision)
     {
         collision = new CollisionInfo();
         
-        // Trouver le point le plus proche sur le cube
-        Vector3 localPoint = cube.transform.InverseTransformPoint(sphereCenter);
+        // PURE MATH: Transformation manuelle
+        Vector3 localPoint = cube.InverseTransformPoint(sphereCenter);
         Vector3 halfSize = cube.size * 0.5f;
         
-        // Clamper aux limites du cube
         Vector3 closestLocal = new Vector3(
             Mathf.Clamp(localPoint.x, -halfSize.x, halfSize.x),
             Mathf.Clamp(localPoint.y, -halfSize.y, halfSize.y),
             Mathf.Clamp(localPoint.z, -halfSize.z, halfSize.z)
         );
         
-        Vector3 closestWorld = cube.transform.TransformPoint(closestLocal);
+        Vector3 closestWorld = cube.TransformPoint(closestLocal);
         Vector3 delta = sphereCenter - closestWorld;
         float distSq = delta.sqrMagnitude;
         
@@ -180,21 +174,18 @@ public class CollisionDetector : MonoBehaviour
             Vector3 normal;
             float penetration;
             
-            // Si la sphère est à l'intérieur du cube (dist très petit)
             if (dist < 0.001f)
             {
-                // Utiliser la direction du centre du cube vers la sphère
-                Vector3 cubeToSphere = sphereCenter - cube.transform.position;
+                Vector3 cubeToSphere = sphereCenter - cube.position;
                 if (cubeToSphere.sqrMagnitude < 0.001f)
                 {
-                    cubeToSphere = Vector3.up; // Fallback
+                    cubeToSphere = Vector3.up;
                 }
                 normal = cubeToSphere.normalized;
                 penetration = sphereRadius;
             }
             else
             {
-                // Normal pointe du point de contact vers le centre de la sphère
                 normal = delta / dist;
                 penetration = sphereRadius - dist;
             }
@@ -206,9 +197,6 @@ public class CollisionDetector : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Résout une collision en appliquant des impulsions
-    /// </summary>
     public void ResolveCollision(CollisionInfo collision, float elasticity)
     {
         RigidBody3D bodyA = collision.bodyA;
@@ -220,20 +208,16 @@ public class CollisionDetector : MonoBehaviour
         Vector3 normal = collision.contactNormal;
         Vector3 contactPoint = collision.contactPoint;
         
-        // Résoudre d'abord la pénétration pour éviter que les objets restent coincés
         ResolvePenetration(collision);
         
-        // Calculer les vitesses relatives au point de contact
         Vector3 velA = bodyA != null ? bodyA.GetVelocityAtPoint(contactPoint) : Vector3.zero;
         Vector3 velB = bodyB != null ? bodyB.GetVelocityAtPoint(contactPoint) : Vector3.zero;
         Vector3 relativeVel = velB - velA;
         
         float velAlongNormal = Vector3.Dot(relativeVel, normal);
         
-        // Ne résoudre que si les objets s'approchent (avec une petite tolérance)
         if (velAlongNormal > -0.01f) return;
         
-        // Calculer le coefficient de restitution moyen
         float restitution = elasticity;
         if (bodyA != null && bodyB != null)
             restitution = (bodyA.restitution + bodyB.restitution) * 0.5f * elasticity;
@@ -242,7 +226,6 @@ public class CollisionDetector : MonoBehaviour
         else if (bodyB != null)
             restitution = bodyB.restitution * elasticity;
         
-        // Calculer l'impulsion
         float massA = bodyA != null && !bodyA.isKinematic ? bodyA.mass : float.MaxValue;
         float massB = bodyB != null && !bodyB.isKinematic ? bodyB.mass : float.MaxValue;
         
@@ -254,7 +237,6 @@ public class CollisionDetector : MonoBehaviour
         
         Vector3 impulse = normal * j;
         
-        // Appliquer l'impulsion
         if (bodyA != null && !bodyA.isKinematic)
         {
             bodyA.AddImpulseAtPoint(-impulse, contactPoint);
@@ -265,12 +247,11 @@ public class CollisionDetector : MonoBehaviour
             bodyB.AddImpulseAtPoint(impulse, contactPoint);
         }
         
-        // Friction
         ApplyFriction(collision, impulse);
     }
 
     /// <summary>
-    /// Résout la pénétration en séparant les objets
+    /// Résout la pénétration - PURE MATH
     /// </summary>
     private void ResolvePenetration(CollisionInfo collision)
     {
@@ -285,24 +266,23 @@ public class CollisionDetector : MonoBehaviour
         
         if (totalInvMass <= 0) return;
         
-        // Ajouter un petit facteur pour garantir la séparation complète
         float separationFactor = 1.02f;
         Vector3 correction = collision.contactNormal * (collision.penetrationDepth * separationFactor) / totalInvMass;
         
+        // PURE MATH: Modifier directement la position stockée
         if (bodyA != null && !bodyA.isKinematic)
         {
-            bodyA.transform.position -= correction * invMassA;
+            bodyA.position -= correction * invMassA;
+            bodyA.UpdateVisualTransform();
         }
         
         if (bodyB != null && !bodyB.isKinematic)
         {
-            bodyB.transform.position += correction * invMassB;
+            bodyB.position += correction * invMassB;
+            bodyB.UpdateVisualTransform();
         }
     }
 
-    /// <summary>
-    /// Applique la friction tangentielle
-    /// </summary>
     private void ApplyFriction(CollisionInfo collision, Vector3 normalImpulse)
     {
         RigidBody3D bodyA = collision.bodyA;
@@ -312,7 +292,6 @@ public class CollisionDetector : MonoBehaviour
         Vector3 velB = bodyB != null ? bodyB.GetVelocityAtPoint(collision.contactPoint) : Vector3.zero;
         Vector3 relativeVel = velB - velA;
         
-        // Composante tangentielle
         Vector3 tangent = relativeVel - collision.contactNormal * Vector3.Dot(relativeVel, collision.contactNormal);
         
         if (tangent.sqrMagnitude < 0.0001f) return;

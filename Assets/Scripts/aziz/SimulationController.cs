@@ -45,6 +45,7 @@ public class SimulationController : MonoBehaviour
         
         // Configuration UI
         SetupUI();
+       
     }
 
     /// <summary>
