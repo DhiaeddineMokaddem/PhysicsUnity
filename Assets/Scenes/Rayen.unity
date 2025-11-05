@@ -293,18 +293,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 635b271f193738947ac8034252bea240, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 3
-  depth: 3
+  width: 10
+  depth: 10
   suspensionHeight: 3
-  spacing: 0.051
-  cubeSize: 0.05
-  cubeMass: 1
+  spacing: 1.1
+  cubeWidth: 1
+  cubeHeight: 1
+  cubeDepth: 1
+  cubeMass: 0.1
   cubeMaterial: {fileID: 2100000, guid: 962d326bebfcebf4d9b89d489f120d07, type: 2}
   constraintStiffness: 500
   constraintDamping: 30
   constraintBreakForce: 100
   constraintMaxDistance: 2
   connectDiagonals: 1
+  useThinPlatePreset: 1
+  useThickPlatePreset: 0
   buildOnStart: 1
 --- !u!4 &581280930
 Transform:
