@@ -28,8 +28,8 @@ public struct CollisionInfo
 public class CollisionDetector : MonoBehaviour
 {
     [Header("Paramètres de Collision")]
-    public float collisionTolerance = 0.01f;
-    public int solverIterations = 4;
+    public float collisionTolerance = 0.01f; // Augmenté pour réduire faux positifs
+    public int solverIterations = 18;
     
     private List<CollisionInfo> collisions = new List<CollisionInfo>();
 
@@ -158,6 +158,7 @@ public class CollisionDetector : MonoBehaviour
     public bool DetectSphereCollision(Vector3 sphereCenter, float sphereRadius, RigidBody3D cube, out CollisionInfo collision)
     {
         collision = new CollisionInfo();
+        if (cube == null || cube.isKinematic) return false;
         
         // Trouver le point le plus proche sur le cube
         Vector3 localPoint = cube.transform.InverseTransformPoint(sphereCenter);
@@ -286,7 +287,7 @@ public class CollisionDetector : MonoBehaviour
         if (totalInvMass <= 0) return;
         
         // Ajouter un petit facteur pour garantir la séparation complète
-        float separationFactor = 1.02f;
+        float separationFactor = 1.1f;
         Vector3 correction = collision.contactNormal * (collision.penetrationDepth * separationFactor) / totalInvMass;
         
         if (bodyA != null && !bodyA.isKinematic)

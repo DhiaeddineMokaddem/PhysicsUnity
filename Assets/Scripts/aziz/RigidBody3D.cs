@@ -10,9 +10,9 @@ public class RigidBody3D : MonoBehaviour
     public Vector3 velocity = Vector3.zero;
     public Vector3 angularVelocity = Vector3.zero;
     public float restitution = 0.5f; // Coefficient d'élasticité (0 = inélastique, 1 = parfaitement élastique)
-    public float friction = 0.3f;
-    public float linearDamping = 0.001f; // Amortissement linéaire pour stabilité
-    public float angularDamping = 0.01f; // Amortissement angulaire pour stabilité
+    public float friction = 0.8f; // Augmenté pour plus de stabilité
+    public float linearDamping = 0.02f; // Augmenté pour plus de stabilité
+    public float angularDamping = 0.15f; // Augmenté pour plus de stabilité
     
     [Header("État du Corps")]
     public bool isKinematic = false; // Si vrai, n'est pas affecté par les forces
@@ -40,14 +40,14 @@ public class RigidBody3D : MonoBehaviour
     void CalculateInertiaTensor()
     {
         float m = mass;
-        float w = size.x;
-        float h = size.y;
-        float d = size.z;
+        float w = Mathf.Max(size.x, 0.1f); // Clamp minimum size
+        float h = Mathf.Max(size.y, 0.1f);
+        float d = Mathf.Max(size.z, 0.1f);
         
         // Tenseur d'inertie pour un parallélépipède rectangle
-        float Ixx = (m / 12.0f) * (h * h + d * d);
-        float Iyy = (m / 12.0f) * (w * w + d * d);
-        float Izz = (m / 12.0f) * (w * w + h * h);
+        float Ixx = Mathf.Max((m / 12.0f) * (h * h + d * d), 0.01f); // Clamp min inertia
+        float Iyy = Mathf.Max((m / 12.0f) * (w * w + d * d), 0.01f);
+        float Izz = Mathf.Max((m / 12.0f) * (w * w + h * h), 0.01f);
         
         inertiaTensor = Matrix4x4.identity;
         inertiaTensor.m00 = Ixx;
@@ -121,6 +121,10 @@ public class RigidBody3D : MonoBehaviour
     /// </summary>
     public void IntegratePhysics(float deltaTime)
     {
+        float maxAngularSpeed = 4f; // Réduit pour éviter rotations excessives
+        if (angularVelocity.magnitude > maxAngularSpeed)
+            angularVelocity = angularVelocity.normalized * maxAngularSpeed;
+
         if (isKinematic) return;
 
         // Appliquer la gravité

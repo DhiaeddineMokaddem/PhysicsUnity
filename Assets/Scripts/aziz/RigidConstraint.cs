@@ -10,10 +10,10 @@ public class RigidConstraint : MonoBehaviour
     public RigidBody3D bodyB;
     
     [Header("Paramètres de Contrainte")]
-    public float maxDistance = 1.0f; // Distance maximale avant rupture
-    public float breakForce = 100.0f; // Force maximale avant rupture
-    public float stiffness = 1000.0f; // Rigidité de la contrainte
-    public float damping = 50.0f; // Amortissement
+    public float maxDistance = 1.0f;
+    public float breakForce = 100.0f;
+    public float stiffness = 1000.0f;
+    public float damping = 50.0f;
     
     [Header("État")]
     public bool isBroken = false;
@@ -23,12 +23,14 @@ public class RigidConstraint : MonoBehaviour
     private Vector3 localAnchorB;
     private float restDistance;
     private float accumulatedForce = 0f;
+    
+    // NOUVEAU: Flag pour désactivation complète
+    private bool isActive = true;
 
     void Start()
     {
         if (bodyA != null && bodyB != null)
         {
-            // Calculer les points d'ancrage locaux
             localAnchorA = bodyA.transform.InverseTransformPoint(transform.position);
             localAnchorB = bodyB.transform.InverseTransformPoint(transform.position);
             restDistance = Vector3.Distance(bodyA.transform.position, bodyB.transform.position);
@@ -36,18 +38,18 @@ public class RigidConstraint : MonoBehaviour
     }
 
     /// <summary>
-    /// Résout la contrainte (appelé par PhysicsManager)
+    /// CORRECTION MAJEURE: Ne fait RIEN si cassée
     /// </summary>
     public void SolveConstraint(float deltaTime)
     {
-        if (isBroken || bodyA == null || bodyB == null) return;
+        // ARRÊT IMMÉDIAT si cassée ou inactive
+        if (isBroken || !isActive || !enabled) return;
+        if (bodyA == null || bodyB == null) return;
         if (bodyA.isKinematic && bodyB.isKinematic) return;
 
-        // Calculer les positions mondiales des points d'ancrage
         Vector3 worldAnchorA = bodyA.transform.TransformPoint(localAnchorA);
         Vector3 worldAnchorB = bodyB.transform.TransformPoint(localAnchorB);
         
-        // Vecteur de connexion
         Vector3 delta = worldAnchorB - worldAnchorA;
         float currentDistance = delta.magnitude;
         
@@ -55,63 +57,69 @@ public class RigidConstraint : MonoBehaviour
         if (currentDistance > maxDistance)
         {
             Break();
-            return;
+            return; // IMPORTANT: Sortir immédiatement
         }
         
         if (currentDistance < 0.0001f) return;
         
         Vector3 direction = delta / currentDistance;
         
-        // Calculer l'erreur
         float error = currentDistance - restDistance;
         
-        // Calculer les vitesses relatives
         Vector3 velA = bodyA.GetVelocityAtPoint(worldAnchorA);
         Vector3 velB = bodyB.GetVelocityAtPoint(worldAnchorB);
         Vector3 relativeVel = velB - velA;
         float relativeVelAlongConstraint = Vector3.Dot(relativeVel, direction);
         
-        // Force de rappel (loi de Hooke)
         float springForce = error * stiffness;
-        
-        // Force d'amortissement
         float dampingForce = relativeVelAlongConstraint * damping;
-        
-        // Force totale
         float totalForce = springForce + dampingForce;
+        
         Vector3 force = direction * totalForce;
         
-        // Accumuler la force pour vérifier la rupture
         accumulatedForce += Mathf.Abs(totalForce) * deltaTime;
         
         // Vérifier la rupture par force
         if (Mathf.Abs(totalForce) > breakForce)
         {
             Break();
-            return;
+            return; // IMPORTANT: Sortir immédiatement
         }
         
-        // Appliquer les forces
-        if (!bodyA.isKinematic)
+        // Appliquer les forces SEULEMENT si toujours active
+        if (isActive && !isBroken)
         {
-            bodyA.AddForceAtPoint(force, worldAnchorA);
-        }
-        
-        if (!bodyB.isKinematic)
-        {
-            bodyB.AddForceAtPoint(-force, worldAnchorB);
+            if (!bodyA.isKinematic)
+            {
+                bodyA.AddForceAtPoint(force, worldAnchorA);
+            }
+            
+            if (!bodyB.isKinematic)
+            {
+                bodyB.AddForceAtPoint(-force, worldAnchorB);
+            }
         }
     }
 
     /// <summary>
-    /// Rompt la contrainte
+    /// AMÉLIORATION: Désactivation totale lors de la rupture
     /// </summary>
     public void Break()
     {
         if (!isBroken)
         {
             isBroken = true;
-            Debug.Log($"Contrainte rompue entre {bodyA.name} et {bodyB.name}");
+            isActive = false; // NOUVEAU: Désactiver complètement
+            enabled = false; // NOUVEAU: Désactiver le composant
+            
+            // Optionnel: Détruire le renderer pour visualisation
+            Renderer renderer = GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            
+            Debug.Log($"Contrainte rompue: {bodyA.name} <-> {bodyB.name}");
         }
     }
 
@@ -121,28 +129,57 @@ public class RigidConstraint : MonoBehaviour
     public void Repair()
     {
         isBroken = false;
+        isActive = true;
+        enabled = true;
         accumulatedForce = 0f;
+        
+        Renderer renderer = GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.enabled = true;
+        }
+        
+        // Recalculer la distance de repos
+        if (bodyA != null && bodyB != null)
+        {
+            restDistance = Vector3.Distance(bodyA.transform.position, bodyB.transform.position);
+        }
     }
 
     void OnDrawGizmos()
     {
         if (bodyA == null || bodyB == null) return;
         
+        // Ne rien dessiner si cassée
+        if (isBroken || !isActive)
+        {
+            return;
+        }
+        
         Vector3 worldAnchorA = bodyA.transform.TransformPoint(localAnchorA);
         Vector3 worldAnchorB = bodyB.transform.TransformPoint(localAnchorB);
         
-        if (isBroken)
-        {
-            Gizmos.color = Color.red;
-        }
-        else
-        {
-            float stress = accumulatedForce / (breakForce * 10f);
-            Gizmos.color = Color.Lerp(Color.green, Color.yellow, stress);
-        }
+        float stress = accumulatedForce / (breakForce * 10f);
+        Gizmos.color = Color.Lerp(Color.green, Color.yellow, stress);
         
         Gizmos.DrawLine(worldAnchorA, worldAnchorB);
-        Gizmos.DrawWireSphere(worldAnchorA, 0.1f);
-        Gizmos.DrawWireSphere(worldAnchorB, 0.1f);
+        Gizmos.DrawWireSphere(worldAnchorA, 0.05f);
+        Gizmos.DrawWireSphere(worldAnchorB, 0.05f);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (bodyA == null || bodyB == null) return;
+        if (isBroken) return;
+        
+        Vector3 worldAnchorA = bodyA.transform.TransformPoint(localAnchorA);
+        Vector3 worldAnchorB = bodyB.transform.TransformPoint(localAnchorB);
+        
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(worldAnchorA, worldAnchorB);
+        
+        // Afficher info de rupture
+        Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
+        Gizmos.DrawWireSphere(worldAnchorA, maxDistance);
     }
 }
