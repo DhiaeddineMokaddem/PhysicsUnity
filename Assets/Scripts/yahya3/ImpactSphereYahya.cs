@@ -8,26 +8,34 @@ using System.Collections.Generic;
 /// </summary>
 public class ImpactSphereYahya : MonoBehaviour
 {
-    [Header("Propriétés de la Sphère")]
+    [Header("Proprits de la Sphre")]
     public float radius = 1.0f;
-    public float mass = 10.0f; // Augmenté pour plus d'impact
+    public float mass = 10.0f; // Augment pour plus d'impact
     public Vector3 velocity = Vector3.zero;
     public float restitution = 0.4f;
     
+    [Header("Gravit")]
+    public bool useGravity = true;
+    public float gravityStrength = 9.81f; // Gravit (m/s²)
+    
     [Header("Impact Horizontal")]
-    public float impactMultiplier = 2.0f; // Augmenté
-    public float breakRadius = 4.0f; // Augmenté
-    public bool autoLaunch = true; // Activé par défaut
+    public float impactMultiplier = 0.8f; // Rduit pour impact moins violent
+    public float breakRadius = 4.0f; // Augment
+    public bool autoLaunch = false; // Dsactiv par dfaut - attendre Space
     public enum LaunchSide { Left, Right }
     public LaunchSide launchFrom = LaunchSide.Right;
-    public float launchSpeed = 25f; // Vitesse beaucoup plus élevée
-    public float launchHeight = 2.5f;
-    public float launchDistance = 12f; // Plus loin pour accélérer
+    public float launchSpeed = 75f; // Vitesse TRS RAPIDE pour longue distance
+    public float launchHeight = 5.0f; // Higher to avoid immediate ground collision
+    public float launchDistance = 15f; // Plus loin pour mieux acclrer
+    
+    [Header("Air Resistance")]
+    public bool useAirResistance = false; // Disabled by default for maximum speed
+    public float airResistanceCoeff = 0.01f; // Very low air resistance
     
     [Header("Limites physiques")]
-    public float maxImpulsePerCollision = 150f; // Augmenté
+    public float maxImpulsePerCollision = 150f; // Rduit pour moins de violence
     [Range(0f, 1f)]
-    public float energyLossPerCollision = 0.15f; // Réduit pour garder l'énergie
+    public float energyLossPerCollision = 0.02f; // Trs faible pour distances longues
     
     [Header("Visualisation")]
     public Color sphereColor = Color.red;
@@ -89,8 +97,13 @@ public class ImpactSphereYahya : MonoBehaviour
         collisionCount = 0;
         isLaunched = true;
         
-        Debug.Log($"LANCEMENT! Direction: {direction}, Vitesse: {launchSpeed} m/s");
-        Debug.Log($"Énergie cinétique: {0.5f * mass * launchSpeed * launchSpeed:F0} J");
+        Debug.Log("••••••••••••••••••••••••••••••••••••••••••••••");
+        Debug.Log($"ŠŸŠŸ LANCEMENT SUPER RAPIDE! ŠŸŠŸ");
+        Debug.Log($"  Direction: {direction}");
+        Debug.Log($"  Vitesse: {launchSpeed} m/s");
+        Debug.Log($"  ‰nergie cintique: {0.5f * mass * launchSpeed * launchSpeed:F0} J");
+        Debug.Log($"  Gravit active: {useGravity}");
+        Debug.Log("••••••••••••••••••••••••••••••••••••••••••••••");
     }
 
     public void LaunchTowards(Vector3 target)
@@ -108,23 +121,46 @@ public class ImpactSphereYahya : MonoBehaviour
     void FixedUpdate()
     {
         if (physicsManager != null && physicsManager.pauseSimulation) return;
-        if (!isLaunched) return;
         
         float deltaTime = Time.fixedDeltaTime;
         
         collidedThisFrame.Clear();
         
-        // Gravité
-        acceleration = Vector3.down * 9.81f;
+        // Gravit (mme si la sphre n'est pas lance)
+        if (useGravity)
+        {
+            acceleration = Vector3.down * gravityStrength;
+        }
+        else
+        {
+            acceleration = Vector3.zero;
+        }
         
-        // Intégration
+        // Intgration
         velocity += acceleration * deltaTime;
+        
+        // Optional air resistance (disabled by default for max speed)
+        if (useAirResistance && velocity.magnitude > 0.1f)
+        {
+            Vector3 airResistance = -velocity.normalized * velocity.sqrMagnitude * airResistanceCoeff;
+            velocity += airResistance * deltaTime;
+        }
+        
         position += velocity * deltaTime;
         
         UpdateVisualTransform();
         
-        // CRITIQUE: Détection de collision AVANT le sol
-        DetectCollisions();
+        // CRITIQUE: Dtection de collision mme si pas lance (pour gravit)
+        if (isLaunched)
+        {
+            DetectCollisions();
+            
+            // Debug: Log velocity every 0.5 seconds
+            if (showDebugInfo && Time.frameCount % 30 == 0)
+            {
+                Debug.Log($"Sphere velocity: {velocity.magnitude:F2} m/s, Position: {position}");
+            }
+        }
         HandleGroundCollision();
         
         if (showDebugInfo && isLaunched)
@@ -183,6 +219,9 @@ public class ImpactSphereYahya : MonoBehaviour
     {
         if (cube.isKinematic) return;
         
+        // Store velocity magnitude before collision
+        float velocityBeforeCollision = velocity.magnitude;
+        
         Vector3 cubeToSphere = position - cube.position;
         Vector3 normal = cubeToSphere.normalized;
         Vector3 contactPoint = collision.contactPoint;
@@ -224,32 +263,51 @@ public class ImpactSphereYahya : MonoBehaviour
         
         // Application de l'impulsion
         velocity += impulse * invMassSphere;
-        cube.AddImpulseAtPoint(-impulse * 2.0f, contactPoint); // Multiplié par 2 pour plus d'effet
+        cube.AddImpulseAtPoint(-impulse * 0.8f, contactPoint); // Rduit pour viter que les cubes volent trop loin
         
-        // Perte d'énergie réduite
-        velocity *= (1f - energyLossPerCollision);
+        // Perte d'énergie minimale pour longues distances
+        if (velocityBeforeCollision < 10f) // Only apply energy loss at low speeds
+        {
+            velocity *= (1f - energyLossPerCollision);
+        }
+        else
+        {
+            velocity *= (1f - energyLossPerCollision * 0.1f); // Presque aucune perte à haute vitesse
+        }
         
-        // Friction
+        // Ensure we maintain velocity - preserve at least 85% of original speed at high velocities
+        float speedAfterLoss = velocity.magnitude;
+        if (velocityBeforeCollision > 20f && speedAfterLoss < velocityBeforeCollision * 0.85f)
+        {
+            velocity = velocity.normalized * (velocityBeforeCollision * 0.85f);
+        }
+        else if (velocityBeforeCollision > 10f && speedAfterLoss < velocityBeforeCollision * 0.75f)
+        {
+            velocity = velocity.normalized * (velocityBeforeCollision * 0.75f);
+        }
+        
+        // Friction minimale pour distances maximales
         Vector3 tangentVel = relativeVel - normal * velAlongNormal;
         if (tangentVel.magnitude > 0.001f)
         {
             Vector3 tangent = tangentVel.normalized;
-            float frictionCoeff = 0.3f;
-            float frictionMag = Mathf.Min(tangentVel.magnitude * 0.5f, Mathf.Abs(j) * frictionCoeff);
+            // Friction extrmement rduite pour longues distances
+            float frictionCoeff = velocityBeforeCollision > 20f ? 0.01f : 0.05f;
+            float frictionMag = Mathf.Min(tangentVel.magnitude * 0.1f, Mathf.Abs(j) * frictionCoeff);
             Vector3 frictionImpulse = -tangent * frictionMag;
             
             velocity += frictionImpulse * invMassSphere;
             cube.AddImpulseAtPoint(-frictionImpulse, contactPoint);
         }
         
-        Debug.Log($"Impulsion appliquée: {j:F1} N·s, Nouvelle vitesse: {velocity.magnitude:F2} m/s");
+        Debug.Log($"Collision: Vitesse avant={velocityBeforeCollision:F1}, après={velocity.magnitude:F1} m/s");
     }
 
     void OnImpact(Vector3 impactPoint)
     {
         float kineticEnergy = 0.5f * mass * velocity.sqrMagnitude;
         float explosionForce = kineticEnergy * impactMultiplier;
-        explosionForce = Mathf.Clamp(explosionForce, 100f, 2000f); // Force minimale garantie
+        explosionForce = Mathf.Clamp(explosionForce, 50f, 1500f); // Force rduite pour impact moins violent
         
         Debug.Log("═══════════════════════════════════");
         Debug.Log($"🎯 IMPACT HORIZONTAL à {impactPoint}");
@@ -285,9 +343,13 @@ public class ImpactSphereYahya : MonoBehaviour
                 float groundRestitution = physicsManager != null ? physicsManager.groundRestitution : 0.3f;
                 velocity.y = -velocity.y * groundRestitution;
                 
-                float groundFriction = physicsManager != null ? physicsManager.groundFriction : 0.5f;
-                velocity.x *= (1f - groundFriction * 0.5f); // Friction réduite
-                velocity.z *= (1f - groundFriction * 0.5f);
+                // MINIMAL FRICTION: Only apply when sphere is almost stopped
+                if (Mathf.Abs(velocity.y) < 0.2f && velocity.magnitude < 5f)
+                {
+                    float groundFriction = physicsManager != null ? physicsManager.groundFriction : 0.5f;
+                    velocity.x *= (1f - groundFriction * 0.02f); // Minimal friction - 2%
+                    velocity.z *= (1f - groundFriction * 0.02f);
+                }
             }
         }
     }

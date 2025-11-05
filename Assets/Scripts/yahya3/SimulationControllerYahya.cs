@@ -335,7 +335,7 @@ public class SimulationControllerYahya : MonoBehaviour
     {
         if (impactSphere != null)
         {
-            impactSphere.launchSpeed = Mathf.Clamp(impactSphere.launchSpeed + delta, 1f, 50f);
+            impactSphere.launchSpeed = Mathf.Clamp(impactSphere.launchSpeed + delta, 1f, 100f);
             Debug.Log($"Vitesse de lancement: {impactSphere.launchSpeed:F1} m/s");
         }
     }
@@ -447,7 +447,7 @@ public class SimulationControllerYahya : MonoBehaviour
             {
                 GUILayout.Label($"Launch Speed: {impactSphere.launchSpeed:F1} m/s (↑/↓)");
                 impactSphere.launchSpeed = GUILayout.HorizontalSlider(
-                    impactSphere.launchSpeed, 1f, 30f
+                    impactSphere.launchSpeed, 1f, 100f
                 );
                 
                 GUILayout.Space(5);
