@@ -16,6 +16,10 @@
         public Vector3[] Vertices;
         public int[] Triangles;
         public Color Color;
+        public float Gravity = 9.81f;
+        public float Damping = 0.5f;
+        public bool UseFixedDeltaTime = true;
+        public float CustomDt = 0.02f;
 
         public CustomRigidBody3D(float a, float b, float c, float mass, Vector3 position, Color color, Vector3[] vertices, int[] triangles)
         {
@@ -49,19 +53,32 @@
             L += Vector3.Cross(r, f) * DT;
         }
 
+        public void ClearForces()
+        {
+            P = Vector3.zero;
+            L = Vector3.zero;
+        }
+
         public void UpdatePhysics()
         {
-            Velocity = P / Mass;
+            float dt = UseFixedDeltaTime ? Time.fixedDeltaTime : CustomDt;
+            // Integrate velocity from accumulated force
+            Velocity += (P / Mass) * dt;
+            Position += Velocity * dt;
+            // Clamp to ground
+            if (Position.y <= 0f)
+            {
+                Position.y = 0f;
+                Velocity = Vector3.zero;
+            }
             Vector3 omega = Math3D.MultiplyMatrixVector3(R * IbodyInv * R.transpose, L);
-            Position += Velocity * DT;
-
             // Omega matrix
             Matrix4x4 omegaMat = Matrix4x4.zero;
             omegaMat[0, 1] = -omega.z; omegaMat[0, 2] = omega.y;
             omegaMat[1, 0] = omega.z; omegaMat[1, 2] = -omega.x;
             omegaMat[2, 0] = -omega.y; omegaMat[2, 1] = omega.x;
 
-            Matrix4x4 rupdate = Math3D.Add(Matrix4x4.identity, Math3D.MultiplyScalar(omegaMat, DT));
+            Matrix4x4 rupdate = Math3D.Add(Matrix4x4.identity, Math3D.MultiplyScalar(omegaMat, dt));
             R = Math3D.MultiplyMatrix4x4(rupdate, R);
             R = Math3D.GramSchmidt(R);
         }

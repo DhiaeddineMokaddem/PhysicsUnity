@@ -30,5 +30,6 @@ public class CubeObject4
             1,2,6, 1,6,5,
             0,4,7, 0,7,3
         };
+        
     }
 }

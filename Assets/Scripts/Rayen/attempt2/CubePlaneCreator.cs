@@ -70,16 +70,22 @@ namespace Rayen.attempt2
                     mf.mesh = mesh;
 
                     cubeGameObjects.Add(cubeGO);
-
-
-
+                    // Attach force applier and set reference to rigid body
+                    var forceApplier = cubeGO.AddComponent<CustomRigidBodyForceApplier>();
+                    forceApplier.rigidBody = crb;
+                    forceApplier.gravity = crb.Gravity;
+                    forceApplier.damping = crb.Damping;
+                    forceApplier.useFixedDeltaTime = crb.UseFixedDeltaTime;
+                    forceApplier.customDt = crb.CustomDt;
+                    //cubeGO.AddComponent<CustomFreeFallDamping>();
+                    // Optionally set other parameters if needed
+                    // damping.gravity = ...;
+                    // damping.damping = ...;
+                    // damping.useFixedDeltaTime = ...;
+                    // damping.customDt = ...;
                 }
             }
         }
-
-
-
-
 
     }
 }
