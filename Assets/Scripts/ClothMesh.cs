@@ -47,24 +47,6 @@ public class ClothSimulation : MonoBehaviour
     private Mesh mesh;
     private int[] meshTriangles;
 
-    /// <summary>
-    /// Represents a connection between two particles.  The rest length is the
-    /// distance at which the spring is neither compressed nor stretched.
-    /// </summary>
-    private struct Spring
-    {
-        public int indexA;
-        public int indexB;
-        public float restLength;
-
-        public Spring(int a, int b, float rest)
-        {
-            indexA = a;
-            indexB = b;
-            restLength = rest;
-        }
-    }
-
     private List<Spring> springs;
 
     void Awake()
