@@ -6,7 +6,13 @@ public class CustomChainPhysics : MonoBehaviour
     [SerializeField] private int linkCount = 10;
     [SerializeField] private float linkLength = 0.5f;
     [SerializeField] private float linkRadius = 0.1f;
-    [SerializeField] private Transform anchor; // Object to follow
+
+    [Header("Anchor Settings")]
+    [SerializeField] private Transform anchorStart; // First anchor
+    [SerializeField] private Transform anchorEnd; // Second anchor
+    [SerializeField] private float anchorStartStrength = 100f; // Breaking force threshold
+    [SerializeField] private float anchorEndStrength = 100f;
+    [SerializeField] private float maxStretchDistance = 15f; // Max distance before break
 
     [Header("Physics Settings")]
     [SerializeField] private float gravity = 9.81f;
@@ -21,8 +27,15 @@ public class CustomChainPhysics : MonoBehaviour
     private Quaternion[] rotations;
     private float[] masses;
 
-    private Vector3 anchorPos;
-    private Vector3 prevAnchorPos;
+    private Vector3 anchorStartPos;
+    private Vector3 prevAnchorStartPos;
+    private Vector3 anchorEndPos;
+    private Vector3 prevAnchorEndPos;
+
+    // Anchor states
+    private bool startAnchorActive = true;
+    private bool endAnchorActive = true;
+    private float currentTension = 0f;
 
     void Start()
     {
@@ -37,31 +50,47 @@ public class CustomChainPhysics : MonoBehaviour
         rotations = new Quaternion[linkCount];
         masses = new float[linkCount];
 
-        // Initialize anchor position
-        anchorPos = anchor != null ? anchor.position : transform.position;
-        prevAnchorPos = anchorPos;
+        // Initialize anchor positions
+        anchorStartPos = anchorStart != null ? anchorStart.position : transform.position;
+        prevAnchorStartPos = anchorStartPos;
 
-        // Create chain hanging down from anchor
+        anchorEndPos = anchorEnd != null ? anchorEnd.position : transform.position + Vector3.right * linkLength * linkCount;
+        prevAnchorEndPos = anchorEndPos;
+
+        // Create chain between anchors
         for (int i = 0; i < linkCount; i++)
         {
-            positions[i] = anchorPos + Vector3.down * linkLength * i;
+            float t = (float)i / (linkCount - 1);
+            positions[i] = Vector3.Lerp(anchorStartPos, anchorEndPos, t);
             prevPositions[i] = positions[i];
             velocities[i] = Vector3.zero;
             rotations[i] = Quaternion.identity;
             masses[i] = 1f;
         }
+
+        startAnchorActive = true;
+        endAnchorActive = true;
     }
 
     void Update()
     {
         float dt = Time.deltaTime;
 
-        // Update anchor position
-        if (anchor != null)
+        // Update anchor positions
+        if (anchorStart != null && startAnchorActive)
         {
-            prevAnchorPos = anchorPos;
-            anchorPos = anchor.position;
+            prevAnchorStartPos = anchorStartPos;
+            anchorStartPos = anchorStart.position;
         }
+
+        if (anchorEnd != null && endAnchorActive)
+        {
+            prevAnchorEndPos = anchorEndPos;
+            anchorEndPos = anchorEnd.position;
+        }
+
+        // Check for breaking condition
+        CheckAnchorBreaking();
 
         // Verlet integration
         VerletIntegration(dt);
@@ -76,19 +105,85 @@ public class CustomChainPhysics : MonoBehaviour
         UpdateRotations();
     }
 
+    void CheckAnchorBreaking()
+    {
+        if (!startAnchorActive && !endAnchorActive)
+            return;
+
+        // Calculate chain length
+        float chainLength = linkLength * (linkCount - 1);
+
+        // Calculate distance between anchors
+        float anchorDistance = Vector3.Distance(anchorStartPos, anchorEndPos);
+
+        // Calculate tension (how much stretched beyond natural length)
+        float stretch = anchorDistance - chainLength;
+        currentTension = Mathf.Max(0, stretch);
+
+        // Check if stretched too far
+        if (stretch > maxStretchDistance)
+        {
+            // Break the weaker anchor
+            if (startAnchorActive && endAnchorActive)
+            {
+                if (anchorStartStrength <= anchorEndStrength)
+                {
+                    BreakAnchor(true);
+                }
+                else
+                {
+                    BreakAnchor(false);
+                }
+            }
+        }
+
+        // Also check based on force/strength
+        if (startAnchorActive && currentTension > anchorStartStrength)
+        {
+            BreakAnchor(true);
+        }
+        else if (endAnchorActive && currentTension > anchorEndStrength)
+        {
+            BreakAnchor(false);
+        }
+    }
+
+    void BreakAnchor(bool breakStart)
+    {
+        if (breakStart)
+        {
+            startAnchorActive = false;
+            Debug.Log("Start anchor broke! Tension: " + currentTension);
+        }
+        else
+        {
+            endAnchorActive = false;
+            Debug.Log("End anchor broke! Tension: " + currentTension);
+        }
+    }
+
     void VerletIntegration(float dt)
     {
         for (int i = 0; i < linkCount; i++)
         {
+            // Skip anchored links
+            if ((i == 0 && startAnchorActive) || (i == linkCount - 1 && endAnchorActive))
+                continue;
+
             Vector3 temp = positions[i];
 
             // Verlet integration: x(t+dt) = 2*x(t) - x(t-dt) + a*dt^2
             Vector3 acceleration = Vector3.down * gravity;
 
-            // Add velocity from anchor movement if first link
-            if (i == 0)
+            // Add velocity from anchor movement for first/last links
+            if (i == 0 && startAnchorActive)
             {
-                Vector3 anchorVel = (anchorPos - prevAnchorPos) / dt;
+                Vector3 anchorVel = (anchorStartPos - prevAnchorStartPos) / dt;
+                acceleration += anchorVel / dt;
+            }
+            else if (i == linkCount - 1 && endAnchorActive)
+            {
+                Vector3 anchorVel = (anchorEndPos - prevAnchorEndPos) / dt;
                 acceleration += anchorVel / dt;
             }
 
@@ -102,8 +197,17 @@ public class CustomChainPhysics : MonoBehaviour
 
     void ApplyConstraints()
     {
-        // First link is attached to anchor
-        positions[0] = Vector3.Lerp(positions[0], anchorPos, stiffness);
+        // First link attached to start anchor
+        if (startAnchorActive)
+        {
+            positions[0] = Vector3.Lerp(positions[0], anchorStartPos, stiffness);
+        }
+
+        // Last link attached to end anchor
+        if (endAnchorActive)
+        {
+            positions[linkCount - 1] = Vector3.Lerp(positions[linkCount - 1], anchorEndPos, stiffness);
+        }
 
         // Distance constraints between links
         for (int i = 0; i < linkCount - 1; i++)
@@ -121,16 +225,24 @@ public class CustomChainPhysics : MonoBehaviour
                 float ratio1 = masses[i + 1] / totalMass;
                 float ratio2 = masses[i] / totalMass;
 
-                // Don't move first link as much (it's anchored)
-                if (i == 0)
+                // Don't move anchored links
+                bool link1Anchored = (i == 0 && startAnchorActive);
+                bool link2Anchored = (i + 1 == linkCount - 1 && endAnchorActive);
+
+                if (link1Anchored && !link2Anchored)
                 {
                     positions[i + 1] -= correction * 2f;
                 }
-                else
+                else if (link2Anchored && !link1Anchored)
+                {
+                    positions[i] += correction * 2f;
+                }
+                else if (!link1Anchored && !link2Anchored)
                 {
                     positions[i] += correction * ratio1;
                     positions[i + 1] -= correction * ratio2;
                 }
+                // If both anchored, don't move either (shouldn't happen normally)
             }
         }
     }
@@ -167,10 +279,11 @@ public class CustomChainPhysics : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(positions[i], linkRadius * 0.5f);
 
-            // Draw cylinder representing link
+            // Draw cylinder representing link - color based on tension
             if (i < linkCount - 1)
             {
-                Gizmos.color = Color.cyan;
+                float tensionRatio = Mathf.Clamp01(currentTension / maxStretchDistance);
+                Gizmos.color = Color.Lerp(Color.cyan, Color.red, tensionRatio);
                 DrawCylinder(positions[i], positions[i + 1], linkRadius);
             }
 
@@ -188,11 +301,28 @@ public class CustomChainPhysics : MonoBehaviour
             }
         }
 
-        // Draw anchor
-        if (anchor != null)
+        // Draw start anchor
+        if (anchorStart != null)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(anchorPos, linkRadius);
+            Gizmos.color = startAnchorActive ? Color.green : Color.gray;
+            Gizmos.DrawWireSphere(anchorStartPos, linkRadius * 1.5f);
+            Gizmos.DrawWireCube(anchorStartPos, Vector3.one * linkRadius);
+        }
+
+        // Draw end anchor
+        if (anchorEnd != null)
+        {
+            Gizmos.color = endAnchorActive ? Color.green : Color.gray;
+            Gizmos.DrawWireSphere(anchorEndPos, linkRadius * 1.5f);
+            Gizmos.DrawWireCube(anchorEndPos, Vector3.one * linkRadius);
+        }
+
+        // Draw tension indicator
+        if (startAnchorActive && endAnchorActive && currentTension > 0)
+        {
+            Vector3 midPoint = (anchorStartPos + anchorEndPos) * 0.5f;
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(anchorStartPos, anchorEndPos);
         }
     }
 
@@ -227,7 +357,7 @@ public class CustomChainPhysics : MonoBehaviour
         }
     }
 
-    // Public methods to get custom position/rotation
+    // Public methods
     public Vector3 GetLinkPosition(int index)
     {
         if (index >= 0 && index < linkCount)
@@ -245,5 +375,41 @@ public class CustomChainPhysics : MonoBehaviour
     public int GetLinkCount()
     {
         return linkCount;
+    }
+
+    public float GetCurrentTension()
+    {
+        return currentTension;
+    }
+
+    public bool IsStartAnchorActive()
+    {
+        return startAnchorActive;
+    }
+
+    public bool IsEndAnchorActive()
+    {
+        return endAnchorActive;
+    }
+
+    // Manual reattach methods
+    public void ReattachStartAnchor()
+    {
+        startAnchorActive = true;
+        if (anchorStart != null)
+        {
+            anchorStartPos = anchorStart.position;
+            prevAnchorStartPos = anchorStartPos;
+        }
+    }
+
+    public void ReattachEndAnchor()
+    {
+        endAnchorActive = true;
+        if (anchorEnd != null)
+        {
+            anchorEndPos = anchorEnd.position;
+            prevAnchorEndPos = anchorEndPos;
+        }
     }
 }
