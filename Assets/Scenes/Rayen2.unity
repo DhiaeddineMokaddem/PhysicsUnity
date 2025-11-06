@@ -259,10 +259,23 @@ MonoBehaviour:
   height: 3
   spacing: 0.05
   cubeHeight: 0.05
-  cubeWidth: 0.5
-  cubeDepth: 0.5
-  heightOffset: 4
+  cubeWidth: 0.3
+  cubeDepth: 0.3
+  heightOffset: 3
   cubeMaterial: {fileID: 2100000, guid: 35e5085628fecf548bc26ba9eb8ae2f9, type: 2}
+  restitution: 0.1
+  friction: 0.6
+  linearDamping: 0.05
+  angularDamping: 0.1
+  sleepLinearVelocity: 0.08
+  sleepAngularVelocity: 0.08
+  sleepTimeThreshold: 0.5
+  groundDampingMultiplier: 3
+  groundContactThreshold: 0.02
+  preventEdgeBalancing: 1
+  stabilityThreshold: 0.15
+  enableCubeCubeCollision: 1
+  cubeRestitution: 0.1
   sceneObjects: {fileID: 1908028747}
 --- !u!1 &1181783202
 GameObject:
