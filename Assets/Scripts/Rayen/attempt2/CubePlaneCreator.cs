@@ -19,6 +19,7 @@ namespace Rayen.attempt2
 
         private List<CustomRigidBody3D> customRigidBodies = new List<CustomRigidBody3D>();
         private List<GameObject> cubeGameObjects = new List<GameObject>();
+        public CustomSceneObjects sceneObjects;
 
         // CreateCubePlane using CubeObject4
         void Start()
@@ -31,6 +32,28 @@ namespace Rayen.attempt2
             for (int i = 0; i < customRigidBodies.Count; i++)
             {
                 customRigidBodies[i].UpdatePhysics();
+                // Custom collision with plane
+                if (sceneObjects != null)
+                {
+                    float halfHeight = customRigidBodies[i].B * 0.5f;
+                    // Plane collision (assume plane is infinite for now)
+                    if (customRigidBodies[i].Position.y - halfHeight < sceneObjects.planeY)
+                    {
+                        customRigidBodies[i].Position.y = sceneObjects.planeY + halfHeight;
+                        if (customRigidBodies[i].Velocity.y < 0)
+                            customRigidBodies[i].Velocity.y = 0;
+                    }
+                    // Sphere collision (AABB center to sphere center)
+                    Vector3 toCenter = customRigidBodies[i].Position - sceneObjects.spherePosition;
+                    float minDist = sceneObjects.sphereRadius + Mathf.Max(customRigidBodies[i].A, customRigidBodies[i].B, customRigidBodies[i].C) * 0.5f;
+                    if (toCenter.magnitude < minDist)
+                    {
+                        Vector3 normal = toCenter.normalized;
+                        customRigidBodies[i].Position = sceneObjects.spherePosition + normal * minDist;
+                        // Reflect velocity (simple elastic)
+                        customRigidBodies[i].Velocity = Vector3.Reflect(customRigidBodies[i].Velocity, normal);
+                    }
+                }
                 cubeGameObjects[i].transform.position = customRigidBodies[i].Position;
                 MeshFilter mf = cubeGameObjects[i].GetComponent<MeshFilter>();
                 Mesh mesh = mf.mesh;
@@ -68,6 +91,8 @@ namespace Rayen.attempt2
                     mesh.triangles = cube.triangles;
                     mesh.RecalculateNormals();
                     mf.mesh = mesh;
+                    // add custom collisioncubecollisonmanager to each cube
+                    cubeGO.AddComponent<CustomCubeCollisionManager>();
 
                     cubeGameObjects.Add(cubeGO);
                     // Attach force applier and set reference to rigid body
@@ -77,15 +102,8 @@ namespace Rayen.attempt2
                     forceApplier.damping = crb.Damping;
                     forceApplier.useFixedDeltaTime = crb.UseFixedDeltaTime;
                     forceApplier.customDt = crb.CustomDt;
-                    //cubeGO.AddComponent<CustomFreeFallDamping>();
-                    // Optionally set other parameters if needed
-                    // damping.gravity = ...;
-                    // damping.damping = ...;
-                    // damping.useFixedDeltaTime = ...;
-                    // damping.customDt = ...;
                 }
             }
         }
-
     }
 }

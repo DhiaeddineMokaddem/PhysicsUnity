@@ -119,73 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &250715516
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 250715518}
-  - component: {fileID: 250715517}
-  m_Layer: 0
-  m_Name: PhysicsSimulator
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &250715517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 250715516}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e20544cac7b025c4481b1b0d17ca0082, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridWidth: 5
-  gridDepth: 5
-  cubeDimensions: {x: 1, y: 0.5, z: 1}
-  spacing: 0.1
-  heightAboveSphere: 3
-  cubeMass: 1
-  sphereRadius: 1
-  sphereMass: 5
-  gravity: 9.81
-  elasticity: 0.5
-  friction: 0.3
-  fixedTimeStep: 0.01
-  useConstraints: 1
-  constraintStiffness: 500
-  constraintDamping: 10
-  breakForce: 50
-  showConstraintLines: 1
-  showDebugInfo: 1
-  timeScale: 1
-  accumulatedTime: 0
-  simulationStarted: 0
-  collisionCount: 0
-  brokenConstraints: 0
---- !u!4 &250715518
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 250715516}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &503437141
 GameObject:
   m_ObjectHideFlags: 0
@@ -278,6 +211,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &575832486
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 575832488}
+  - component: {fileID: 575832489}
+  m_Layer: 0
+  m_Name: CubePlaneCreator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &575832488
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 575832486}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3.2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &575832489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 575832486}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ece83a927c15ff438a670273a5f6201, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 3
+  height: 3
+  spacing: 0.05
+  cubeHeight: 0.05
+  cubeWidth: 0.5
+  cubeDepth: 0.5
+  heightOffset: 4
+  cubeMaterial: {fileID: 2100000, guid: 35e5085628fecf548bc26ba9eb8ae2f9, type: 2}
+  sceneObjects: {fileID: 1908028747}
 --- !u!1 &1181783202
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,10 +385,63 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!1 &1908028746
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1908028748}
+  - component: {fileID: 1908028747}
+  m_Layer: 0
+  m_Name: SceneCreator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1908028747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908028746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f299673055442ff9ea7f2fcec4e5735, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  planeY: 0
+  planeSize: {x: 10, y: 10}
+  planeMaterial: {fileID: 2100000, guid: 962d326bebfcebf4d9b89d489f120d07, type: 2}
+  spherePosition: {x: 1, y: 0.5, z: 1}
+  sphereRadius: 0.5
+  sphereMaterial: {fileID: 2100000, guid: 962d326bebfcebf4d9b89d489f120d07, type: 2}
+  planeGO: {fileID: 0}
+  sphereGO: {fileID: 0}
+--- !u!4 &1908028748
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908028746}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.91798, y: 0, z: 1.50584}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 503437144}
   - {fileID: 1181783204}
-  - {fileID: 250715518}
+  - {fileID: 575832488}
+  - {fileID: 1908028748}
