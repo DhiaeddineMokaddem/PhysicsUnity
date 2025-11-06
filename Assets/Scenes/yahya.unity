@@ -154,6 +154,8 @@ MonoBehaviour:
   mass: 10
   velocity: {x: 0, y: 0, z: 0}
   restitution: 0.4
+  useGravity: 1
+  gravityStrength: 9.81
   impactMultiplier: 2
   breakRadius: 4
   autoLaunch: 0
@@ -161,6 +163,8 @@ MonoBehaviour:
   launchSpeed: 25
   launchHeight: 2.5
   launchDistance: 10
+  useAirResistance: 0
+  airResistanceCoeff: 0.01
   maxImpulsePerCollision: 150
   energyLossPerCollision: 0.3
   sphereColor: {r: 1, g: 0, b: 0, a: 1}
@@ -686,7 +690,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8eb49e09576f66a458e7787f4de84557, type: 2}
+  - {fileID: 2100000, guid: ebca8b60d00d95c4f88d2af6f3f4ed1c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
