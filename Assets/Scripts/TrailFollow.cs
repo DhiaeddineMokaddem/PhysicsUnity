@@ -22,7 +22,7 @@ public class TrailFollow : MonoBehaviour
     // Used to follow the cube's movement
     public Vector3 GetCubeCenter()
     {
-        Vector3[] vertices = meshScript.GetTransformedVertices();
+        Vector3[] vertices = meshScript.GetTransformedVerticesWorld();
         Vector3 center = Vector3.zero;
         foreach (Vector3 v in vertices)
         {
