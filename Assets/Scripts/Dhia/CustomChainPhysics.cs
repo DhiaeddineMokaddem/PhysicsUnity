@@ -6,6 +6,7 @@ public class CustomChainPhysics : MonoBehaviour
     [SerializeField] private int linkCount = 10;
     [SerializeField] private float linkLength = 0.5f;
     [SerializeField] private float linkRadius = 0.1f;
+    [SerializeField] private GameObject chainLinkPrefab; // 3D model for chain link
 
     [Header("Anchor Settings")]
     [SerializeField] private Transform anchorStart; // First anchor
@@ -26,6 +27,9 @@ public class CustomChainPhysics : MonoBehaviour
     private Vector3[] velocities;
     private Quaternion[] rotations;
     private float[] masses;
+
+    // 3D model instances
+    private GameObject[] linkObjects;
 
     private Vector3 anchorStartPos;
     private Vector3 prevAnchorStartPos;
@@ -49,6 +53,7 @@ public class CustomChainPhysics : MonoBehaviour
         velocities = new Vector3[linkCount];
         rotations = new Quaternion[linkCount];
         masses = new float[linkCount];
+        linkObjects = new GameObject[linkCount];
 
         // Initialize anchor positions
         anchorStartPos = anchorStart != null ? anchorStart.position : transform.position;
@@ -66,6 +71,13 @@ public class CustomChainPhysics : MonoBehaviour
             velocities[i] = Vector3.zero;
             rotations[i] = Quaternion.identity;
             masses[i] = 1f;
+
+            // Instantiate 3D model if prefab is assigned
+            if (chainLinkPrefab != null)
+            {
+                linkObjects[i] = Instantiate(chainLinkPrefab, positions[i], rotations[i], transform);
+                linkObjects[i].name = "ChainLink_" + i;
+            }
         }
 
         startAnchorActive = true;
@@ -103,6 +115,9 @@ public class CustomChainPhysics : MonoBehaviour
 
         // Update rotations based on link directions
         UpdateRotations();
+
+        // Update 3D model positions and rotations
+        UpdateLinkModels();
     }
 
     void CheckAnchorBreaking()
@@ -249,21 +264,64 @@ public class CustomChainPhysics : MonoBehaviour
 
     void UpdateRotations()
     {
-        for (int i = 0; i < linkCount - 1; i++)
+        for (int i = 0; i < linkCount; i++)
         {
-            Vector3 direction = (positions[i + 1] - positions[i]).normalized;
-
-            if (direction.magnitude > 0.001f)
+            if (i < linkCount - 1)
             {
-                // Calculate rotation to point towards next link
-                rotations[i] = Quaternion.LookRotation(direction, Vector3.up);
+                Vector3 direction = (positions[i + 1] - positions[i]).normalized;
+
+                if (direction.magnitude > 0.001f)
+                {
+                    // Calculate rotation to point towards next link
+                    Quaternion baseRotation = Quaternion.LookRotation(direction, Vector3.up);
+
+                    // Alternate 90° rotation for each link to prevent intersection
+                    if (i % 2 == 0)
+                    {
+                        rotations[i] = baseRotation;
+                    }
+                    else
+                    {
+                        rotations[i] = baseRotation * Quaternion.Euler(0, 0, 90);
+                    }
+                }
+            }
+            else
+            {
+                // Last link keeps orientation of previous link but rotated 90°
+                if (linkCount > 1)
+                {
+                    Vector3 direction = (positions[i] - positions[i - 1]).normalized;
+                    if (direction.magnitude > 0.001f)
+                    {
+                        Quaternion baseRotation = Quaternion.LookRotation(direction, Vector3.up);
+                        rotations[i] = baseRotation * Quaternion.Euler(0, 0, 90);
+                    }
+                }
             }
         }
+    }
 
-        // Last link keeps orientation of previous link
-        if (linkCount > 1)
+    void UpdateLinkModels()
+    {
+        if (linkObjects == null)
+            return;
+
+        for (int i = 0; i < linkCount; i++)
         {
-            rotations[linkCount - 1] = rotations[linkCount - 2];
+            if (linkObjects[i] != null)
+            {
+                // Hide first and last links (they're inside anchors)
+                bool shouldRender = i != 0 && i != linkCount - 1;
+                linkObjects[i].SetActive(shouldRender);
+
+                // Update the GameObject's Transform using our custom position/rotation
+                if (shouldRender)
+                {
+                    linkObjects[i].transform.position = positions[i];
+                    linkObjects[i].transform.rotation = rotations[i];
+                }
+            }
         }
     }
 
@@ -410,6 +468,21 @@ public class CustomChainPhysics : MonoBehaviour
         {
             anchorEndPos = anchorEnd.position;
             prevAnchorEndPos = anchorEndPos;
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Clean up instantiated objects
+        if (linkObjects != null)
+        {
+            for (int i = 0; i < linkObjects.Length; i++)
+            {
+                if (linkObjects[i] != null)
+                {
+                    Destroy(linkObjects[i]);
+                }
+            }
         }
     }
 }
