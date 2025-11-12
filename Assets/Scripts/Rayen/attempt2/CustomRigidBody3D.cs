@@ -10,6 +10,7 @@
         public Vector3 P; // Accumulated linear momentum change
         public Vector3 L; // Angular momentum
         public Matrix4x4 R; // Rotation matrix
+        public CustomQuaternion Q; // Rotation quaternion (more stable than matrix)
         public Matrix4x4 Ibody; // Body-space inertia tensor
         public Matrix4x4 IbodyInv; // Inverse body-space inertia tensor
         public Color Color;
@@ -21,6 +22,8 @@
         
         private Vector3 accumulatedForce; // Accumulated forces this frame
         private Vector3 accumulatedTorque; // Accumulated torques this frame
+
+        public bool useQuaternionRotation = true; // Toggle for quaternion vs matrix
 
         public CustomRigidBody3D(float a, float b, float c, float mass, Vector3 position, Color color, Vector3[] vertices, int[] triangles)
         {
@@ -36,6 +39,7 @@
             P = Vector3.zero;
             L = Vector3.zero;
             R = Matrix4x4.identity;
+            Q = CustomQuaternion.Identity;
             accumulatedForce = Vector3.zero;
             accumulatedTorque = Vector3.zero;
 
@@ -82,21 +86,35 @@
             // Calculate angular velocity from angular momentum
             Vector3 omega = Math3D.MultiplyMatrixVector3(IInv, L);
             
-            // Build skew-symmetric matrix for omega
-            Matrix4x4 omegaMat = Matrix4x4.zero;
-            omegaMat[0, 1] = -omega.z; 
-            omegaMat[0, 2] = omega.y;
-            omegaMat[1, 0] = omega.z; 
-            omegaMat[1, 2] = -omega.x;
-            omegaMat[2, 0] = -omega.y; 
-            omegaMat[2, 1] = omega.x;
+            if (useQuaternionRotation)
+            {
+                // QUATERNION INTEGRATION (more stable, prevents drift)
+                CustomQuaternion deltaQ = CustomQuaternion.FromAngularVelocity(omega, dt);
+                Q = CustomQuaternion.Multiply(deltaQ, Q);
+                Q = Q.Normalized(); // Keep unit quaternion
+                
+                // Update rotation matrix from quaternion
+                R = Q.ToRotationMatrix();
+            }
+            else
+            {
+                // MATRIX INTEGRATION (original method, can drift)
+                // Build skew-symmetric matrix for omega
+                Matrix4x4 omegaMat = Matrix4x4.zero;
+                omegaMat[0, 1] = -omega.z; 
+                omegaMat[0, 2] = omega.y;
+                omegaMat[1, 0] = omega.z; 
+                omegaMat[1, 2] = -omega.x;
+                omegaMat[2, 0] = -omega.y; 
+                omegaMat[2, 1] = omega.x;
 
-            // Update rotation matrix: R' = R + (omega* × R) * dt
-            Matrix4x4 rupdate = Math3D.Add(Matrix4x4.identity, Math3D.MultiplyScalar(omegaMat, dt));
-            R = Math3D.MultiplyMatrix4x4(rupdate, R);
-            
-            // Orthonormalize to prevent numerical drift
-            R = Math3D.GramSchmidt(R);
+                // Update rotation matrix: R' = R + (omega* × R) * dt
+                Matrix4x4 rupdate = Math3D.Add(Matrix4x4.identity, Math3D.MultiplyScalar(omegaMat, dt));
+                R = Math3D.MultiplyMatrix4x4(rupdate, R);
+                
+                // Orthonormalize to prevent numerical drift
+                R = Math3D.GramSchmidt(R);
+            }
             
             // Clear accumulated forces for next frame
             accumulatedForce = Vector3.zero;
@@ -108,7 +126,7 @@
             Vector3[] transformedVertices = new Vector3[Vertices.Length];
             for (int i = 0; i < Vertices.Length; i++)
             {
-                // Only apply rotation - GameObject transform handles position
+                // Apply rotation to local vertices
                 transformedVertices[i] = Math3D.MultiplyMatrixVector3(R, Vertices[i]);
             }
             return transformedVertices;
@@ -127,11 +145,22 @@
             return lowestY;
         }
         
-        // Get angular velocity (useful for debugging)
+        // Get angular velocity from angular momentum
         public Vector3 GetAngularVelocity()
         {
             Matrix4x4 IInv = R * IbodyInv * R.transpose;
             return Math3D.MultiplyMatrixVector3(IInv, L);
+        }
+
+        // Get all vertices in world space (useful for collision detection)
+        public Vector3[] GetWorldVertices()
+        {
+            Vector3[] worldVertices = new Vector3[Vertices.Length];
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                worldVertices[i] = Math3D.MultiplyMatrixVector3(R, Vertices[i]) + Position;
+            }
+            return worldVertices;
         }
     }
 }
