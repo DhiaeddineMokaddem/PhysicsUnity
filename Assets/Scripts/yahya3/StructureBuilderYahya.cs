@@ -49,7 +49,7 @@ public class StructureBuilderYahya : MonoBehaviour
     }
 
     /// <summary>
-    /// Construit la structure complète - PURE MATH
+    /// Construit une grande mur - PURE MATH
     /// FIXED: Pauses physics during construction and ensures proper initialization
     /// </summary>
     public void BuildStructure()
@@ -64,22 +64,28 @@ public class StructureBuilderYahya : MonoBehaviour
         
         ClearStructure();
         
-        Debug.Log($"Construction d'une structure {width}x{height}x{depth}...");
+        // Build a BIG WALL: 15 wide x 10 tall x 1 deep, facing the sphere
+        int wallWidth = 15;
+        int wallHeight = 10;
+        int wallDepth = 1;
         
-        RigidBody3DYahya[,,] cubeGrid = new RigidBody3DYahya[width, height, depth];
+        Debug.Log($"Construction d'un mur {wallWidth}x{wallHeight}x{wallDepth}...");
+        
+        RigidBody3DYahya[,,] cubeGrid = new RigidBody3DYahya[wallWidth, wallHeight, wallDepth];
         
         // Create all cubes first
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < wallWidth; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < wallHeight; y++)
             {
-                for (int z = 0; z < depth; z++)
+                for (int z = 0; z < wallDepth; z++)
                 {
-                    // PURE MATH: Calcul manuel de position
+                    // PURE MATH: Calcul manuel de position - rotated 90 degrees to face sphere
+                    // Swap X and Z to make wall face the incoming sphere
                     Vector3 position = new Vector3(
-                        (x - width / 2f) * spacing,
+                        (z - wallDepth / 2f) * spacing,
                         y * spacing,
-                        (z - depth / 2f) * spacing
+                        (x - wallWidth / 2f) * spacing
                     );
                     
                     GameObject cube = CreateCube(position, new Vector3(cubeSize, cubeSize, cubeSize));
@@ -102,12 +108,12 @@ public class StructureBuilderYahya : MonoBehaviour
         }
         
         // Now create constraints with proper initialization
-        CreateConstraints(cubeGrid);
+        CreateConstraints(cubeGrid, wallWidth, wallHeight, wallDepth);
         
         // Wait one frame before resuming physics
         StartCoroutine(ResumePhysicsAfterBuild(wasPaused));
         
-        Debug.Log($"Structure construite: {cubes.Count} cubes créés");
+        Debug.Log($"Mur construit: {cubes.Count} cubes créés");
     }
     
     /// <summary>
@@ -182,39 +188,39 @@ public class StructureBuilderYahya : MonoBehaviour
         return cube;
     }
 
-    void CreateConstraints(RigidBody3DYahya[,,] cubeGrid)
+    void CreateConstraints(RigidBody3DYahya[,,] cubeGrid, int gridWidth, int gridHeight, int gridDepth)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < gridWidth; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < gridHeight; y++)
             {
-                for (int z = 0; z < depth; z++)
+                for (int z = 0; z < gridDepth; z++)
                 {
                     RigidBody3DYahya current = cubeGrid[x, y, z];
                     
-                    ConnectIfValid(current, cubeGrid, x + 1, y, z);
-                    ConnectIfValid(current, cubeGrid, x, y + 1, z);
-                    ConnectIfValid(current, cubeGrid, x, y, z + 1);
+                    ConnectIfValid(current, cubeGrid, x + 1, y, z, gridWidth, gridHeight, gridDepth);
+                    ConnectIfValid(current, cubeGrid, x, y + 1, z, gridWidth, gridHeight, gridDepth);
+                    ConnectIfValid(current, cubeGrid, x, y, z + 1, gridWidth, gridHeight, gridDepth);
                     
                     if (connectDiagonals)
                     {
-                        ConnectIfValid(current, cubeGrid, x + 1, y, z + 1);
-                        ConnectIfValid(current, cubeGrid, x + 1, y, z - 1);
-                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z);
-                        ConnectIfValid(current, cubeGrid, x, y + 1, z + 1);
-                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z + 1);
-                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z - 1);
-                        ConnectIfValid(current, cubeGrid, x - 1, y + 1, z + 1);
-                        ConnectIfValid(current, cubeGrid, x - 1, y + 1, z - 1);
+                        ConnectIfValid(current, cubeGrid, x + 1, y, z + 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x + 1, y, z - 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x, y + 1, z + 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z + 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x + 1, y + 1, z - 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x - 1, y + 1, z + 1, gridWidth, gridHeight, gridDepth);
+                        ConnectIfValid(current, cubeGrid, x - 1, y + 1, z - 1, gridWidth, gridHeight, gridDepth);
                     }
                 }
             }
         }
     }
 
-    void ConnectIfValid(RigidBody3DYahya bodyA, RigidBody3DYahya[,,] grid, int x, int y, int z)
+    void ConnectIfValid(RigidBody3DYahya bodyA, RigidBody3DYahya[,,] grid, int x, int y, int z, int gridWidth, int gridHeight, int gridDepth)
     {
-        if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+        if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight && z >= 0 && z < gridDepth)
         {
             RigidBody3DYahya bodyB = grid[x, y, z];
             CreateConstraint(bodyA, bodyB);

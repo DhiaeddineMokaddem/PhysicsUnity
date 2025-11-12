@@ -151,20 +151,10 @@ public class SimulationControllerYahya : MonoBehaviour
             AdjustLaunchSpeed(-1f);
         }
         
-        // Raccourcis pour construire différentes structures
+        // Build wall structure
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             structureBuilder?.BuildStructure();
-        }
-        
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            structureBuilder?.BuildPyramid(5, 1.1f);
-        }
-        
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            structureBuilder?.BuildTower(10, 3);
         }
     }
 
@@ -200,7 +190,7 @@ public class SimulationControllerYahya : MonoBehaviour
             statsText.text += $"\n+/-: Élasticité";
             statsText.text += $"\nI/K: Multiplicateur d'impact";
             statsText.text += $"\n↑/↓: Vitesse de lancement";
-            statsText.text += $"\n1/2/3: Build Structures";
+            statsText.text += $"\n1: Build Wall";
         }
         
         if (pauseButton != null)
@@ -415,22 +405,12 @@ public class SimulationControllerYahya : MonoBehaviour
             
             GUILayout.Space(10);
             
-            GUILayout.Label("Structures:");
-            if (GUILayout.Button("Grid (1)"))
+            if (GUILayout.Button("Build Wall (1)"))
             {
                 structureBuilder?.BuildStructure();
             }
             
-            if (GUILayout.Button("Pyramid (2)"))
-            {
-                structureBuilder?.BuildPyramid(5, 1.1f);
-            }
-            
-            if (GUILayout.Button("Tower (3)"))
-            {
-                structureBuilder?.BuildTower(10, 3);
-            }
-            
+
             GUILayout.Space(10);
             
             if (physicsManager != null)
