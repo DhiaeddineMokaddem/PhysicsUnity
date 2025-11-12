@@ -17,39 +17,20 @@ namespace Rayen.attempt2
         public Material cubeMaterial;
 
         [Header("Realistic Physics Parameters")]
-        [Tooltip("Bounciness: 0=clay, 0.1=wood, 0.5=rubber, 0.9=steel")]
-        public float restitution = 0.1f;  // Wood/plastic boxes
-        
-        [Tooltip("Friction: 0.3=ice, 0.5=default, 0.7=rubber, 1.0=sandpaper")]
-        public float friction = 0.6f;  // Realistic for wood/cardboard
-        
-        [Tooltip("Linear velocity damping per second (0-1). Simulates air resistance")]
-        public float linearDamping = 0.05f;  // Slight air resistance
-        
-        [Tooltip("Angular velocity damping per second (0-1). Prevents infinite spinning")]
-        public float angularDamping = 0.1f;  // Moderate rotational drag
+        public float restitution = 0.1f;
+        public float friction = 0.6f;
+        public float linearDamping = 0.05f;
+        public float angularDamping = 0.1f;
 
-        [Header("Sleep System (Prevents infinite micro-movements)")]
-        [Tooltip("Linear velocity threshold in m/s for sleeping")]
-        public float sleepLinearVelocity = 0.08f;  // PhysX default: 0.08
-        
-        [Tooltip("Angular velocity threshold in rad/s for sleeping")]
-        public float sleepAngularVelocity = 0.08f;  // PhysX default: 0.08
-        
-        [Tooltip("Time body must be below threshold to sleep (seconds)")]
-        public float sleepTimeThreshold = 0.5f;
-        
-        [Tooltip("Extra damping when body is resting on ground")]
-        public float groundDampingMultiplier = 3.0f;
+        [Header("Sleep System (Prevents micro-movements)")]
+        public float sleepLinearVelocity = 0.02f;
+        public float sleepAngularVelocity = 0.02f;
+        public float sleepTimeThreshold = 0.2f;
+        public float groundDampingMultiplier = 5.0f;
 
         [Header("Stability Improvements")]
-        [Tooltip("Distance from ground to be considered 'on ground' (meters)")]
         public float groundContactThreshold = 0.02f;
-        
-        [Tooltip("Prevents single-point balancing by checking stability")]
         public bool preventEdgeBalancing = true;
-        
-        [Tooltip("Minimum contact area ratio to prevent tipping (0-1)")]
         public float stabilityThreshold = 0.15f;
 
         [Header("Cube-to-Cube Collision")]
@@ -70,16 +51,15 @@ namespace Rayen.attempt2
         void FixedUpdate()
         {
             float dt = Time.fixedDeltaTime;
-            
+
             for (int i = 0; i < customRigidBodies.Count; i++)
             {
                 var rb = customRigidBodies[i];
-                
+
                 // Skip sleeping bodies
                 if (isSleeping[i])
                 {
-                    // Check if we should wake up (external forces, collisions)
-                    if (rb.Velocity.magnitude > sleepLinearVelocity * 2 || 
+                    if (rb.Velocity.magnitude > sleepLinearVelocity * 2 ||
                         rb.GetAngularVelocity().magnitude > sleepAngularVelocity * 2)
                     {
                         isSleeping[i] = false;
@@ -90,68 +70,71 @@ namespace Rayen.attempt2
                         continue; // Stay asleep
                     }
                 }
-                
+
                 // Apply gravity
                 Vector3 gravityForce = Vector3.down * rb.Mass * rb.Gravity;
                 rb.ApplyForce(gravityForce, rb.Position);
-                
-                // Check if on ground for stability calculations
+
+                // Check ground contact
                 bool onGround = IsOnGround(rb);
                 int numGroundContacts = CountGroundContacts(rb);
-                
-                // Apply realistic damping (exponential decay)
+
+                // Apply extra damping on ground
                 float currentLinearDamping = linearDamping;
                 float currentAngularDamping = angularDamping;
-                
+
                 if (onGround)
                 {
-                    // Extra damping when resting
                     currentLinearDamping *= groundDampingMultiplier;
                     currentAngularDamping *= groundDampingMultiplier;
-                    
-                    // Prevent edge balancing - tip over if unstable
+
+                    // Heavily damp small residual motion
+                    if (rb.Velocity.magnitude < 0.05f) rb.Velocity *= 0.01f;
+                    if (rb.GetAngularVelocity().magnitude < 0.05f) rb.L *= 0.01f;
+
+                    // Snap to ground to avoid micro-bounces
+                    rb.Position.y = sceneObjects.planeY + cubeHeight * 0.5f;
+
+                    // Prevent edge balancing
                     if (preventEdgeBalancing && numGroundContacts > 0)
                     {
-                        float contactRatio = numGroundContacts / 4.0f; // 4 bottom vertices
+                        float contactRatio = numGroundContacts / 4.0f;
                         if (contactRatio < stabilityThreshold)
                         {
-                            // Apply tipping torque toward center of mass
                             Vector3 tipDirection = GetTipDirection(rb);
                             Vector3 torque = tipDirection * rb.Mass * 2.0f;
-                            rb.ApplyForce(Vector3.zero, rb.Position); // Dummy to add torque
                             rb.L += torque * dt;
                         }
                     }
                 }
-                
-                // Apply damping forces (realistic velocity-dependent)
+
+                // Apply damping forces
                 Vector3 dampingForce = -currentLinearDamping * rb.Velocity * rb.Mass;
                 rb.ApplyForce(dampingForce, rb.Position);
-                
-                // Apply angular damping (torque-based, more realistic)
+
                 Vector3 omega = rb.GetAngularVelocity();
                 float angularDampingFactor = Mathf.Pow(1.0f - currentAngularDamping, dt);
                 rb.L *= angularDampingFactor;
-                
+
                 // Update physics
                 rb.UpdatePhysics();
-                
+
                 // Handle collisions
                 HandlePlaneCollision(rb, dt);
                 HandleSphereCollision(rb, dt);
-                
+
                 // Update sleep state
                 UpdateSleepState(rb, i, onGround, dt);
-                
-                // Update visual
+
+                // Update visuals
                 cubeGameObjects[i].transform.position = rb.Position;
                 MeshFilter mf = cubeGameObjects[i].GetComponent<MeshFilter>();
                 Mesh mesh = mf.mesh;
                 mesh.vertices = rb.GetTransformedVertices();
                 mesh.RecalculateNormals();
             }
-            
-            // Handle cube-to-cube collisions
+
+            // Cube-to-cube collisions
             if (enableCubeCubeCollision)
             {
                 HandleCubeCubeCollisions();
@@ -163,17 +146,16 @@ namespace Rayen.attempt2
             Vector3 omega = rb.GetAngularVelocity();
             float linearSpeed = rb.Velocity.magnitude;
             float angularSpeed = omega.magnitude;
-            
-            bool isBelowThreshold = linearSpeed < sleepLinearVelocity && 
-                                   angularSpeed < sleepAngularVelocity;
-            
+
+            bool isBelowThreshold = linearSpeed < sleepLinearVelocity &&
+                                    angularSpeed < sleepAngularVelocity;
+
             if (isBelowThreshold && onGround)
             {
                 sleepTimers[index] += dt;
-                
+
                 if (sleepTimers[index] >= sleepTimeThreshold)
                 {
-                    // Put to sleep
                     isSleeping[index] = true;
                     rb.Velocity = Vector3.zero;
                     rb.L = Vector3.zero;
@@ -195,25 +177,21 @@ namespace Rayen.attempt2
         int CountGroundContacts(CustomRigidBody3D rb)
         {
             if (sceneObjects == null) return 0;
-            
             int contacts = 0;
             for (int i = 0; i < rb.Vertices.Length; i++)
             {
                 Vector3 worldVertex = Math3D.MultiplyMatrixVector3(rb.R, rb.Vertices[i]) + rb.Position;
                 if (Mathf.Abs(worldVertex.y - sceneObjects.planeY) < groundContactThreshold)
-                {
                     contacts++;
-                }
             }
             return contacts;
         }
 
         Vector3 GetTipDirection(CustomRigidBody3D rb)
         {
-            // Find the average position of ground contacts
             Vector3 contactCenter = Vector3.zero;
             int contactCount = 0;
-            
+
             for (int i = 0; i < rb.Vertices.Length; i++)
             {
                 Vector3 worldVertex = Math3D.MultiplyMatrixVector3(rb.R, rb.Vertices[i]) + rb.Position;
@@ -223,13 +201,10 @@ namespace Rayen.attempt2
                     contactCount++;
                 }
             }
-            
+
             if (contactCount == 0) return Vector3.zero;
-            
             contactCenter /= contactCount;
             Vector3 comXZ = new Vector3(rb.Position.x, 0, rb.Position.z);
-            
-            // Direction from contact center to center of mass
             return (comXZ - contactCenter).normalized;
         }
 
