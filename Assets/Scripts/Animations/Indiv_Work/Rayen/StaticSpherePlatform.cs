@@ -66,7 +66,7 @@ public class StaticSpherePlatform : MonoBehaviour
             if (body == null || body.isKinematic) continue;
 
             CollisionInfo col;
-            if (_collisionDetector.DetectSphereCollision(position, radius, body, out col))
+            if (_collisionDetector.TryDetectSphereCubeCollision(position, radius, body, out col))
             {
                 // bodyA is the static sphere (null), bodyB is the cube
                 _collisionDetector.ResolveCollision(col, elasticity);

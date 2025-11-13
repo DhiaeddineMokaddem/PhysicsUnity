@@ -35,7 +35,7 @@ public class CubesOverSphereDemo : MonoBehaviour
     public Color groundColor = new Color(0.85f, 0.85f, 0.85f, 1f);
 
     private PhysicsManager _physicsManager;
-    private StaticSpherePlatform _sphere;
+    private DynamicSphere3D _sphere;
 
     void Start()
     {
@@ -66,14 +66,28 @@ public class CubesOverSphereDemo : MonoBehaviour
 
     private void CreateSphere()
     {
-        var sphereGo = new GameObject("StaticSpherePlatform");
-        _sphere = sphereGo.AddComponent<StaticSpherePlatform>();
-        _sphere.radius = sphereRadius;
-        _sphere.center = sphereCenter;
-        _sphere.sphereMaterial = sphereMaterial;
-        _sphere.localElasticity = 1.0f;
-        sphereGo.transform.position = sphereCenter; // render-only placement
+        // Create a render sphere primitive as visual shell, then add DynamicSphere3D
+        var sphereGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphereGo.name = "DynamicSphere3D";
         sphereGo.transform.SetParent(transform, worldPositionStays: true);
+        sphereGo.transform.position = sphereCenter;
+        sphereGo.transform.localScale = Vector3.one * (sphereRadius * 2f);
+
+        var col = sphereGo.GetComponent<Collider>();
+        if (col != null) DestroyImmediate(col);
+
+        _sphere = sphereGo.AddComponent<DynamicSphere3D>();
+        _sphere.radius = sphereRadius;
+        _sphere.mass = 8.0f;
+        _sphere.restitution = 0.3f;
+        _sphere.friction = 0.6f;
+        _sphere.linearDamping = 0.02f;
+        _sphere.isKinematic = false;
+        _sphere.useGravity = true;
+        _sphere.sphereMaterial = sphereMaterial;
+        _sphere.position = sphereCenter;
+        _sphere.velocity = Vector3.zero;
+        _sphere.UpdateVisualTransform();
     }
 
     private void SpawnCubesAboveSphere()
