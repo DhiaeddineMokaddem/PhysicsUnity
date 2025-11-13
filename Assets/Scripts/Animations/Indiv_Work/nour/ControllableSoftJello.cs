@@ -217,6 +217,18 @@ public class ControllableSoftJello : MonoBehaviour
     // External scripts that used jello.stiffness or jello.restitution will still work.
     public float stiffness { get { return GetCurrentStiffness(); } }
     public float restitution { get { return GetCurrentRestitution(); } }
+    
+    /// <summary>
+    /// Get a physics point at the specified grid position
+    /// Used by camera to calculate center of mass
+    /// </summary>
+    public PhysicsSimulation.Core.Physics.SoftBodyPoint GetPoint(int x, int y, int z)
+    {
+        if (points == null) return null;
+        if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize)
+            return null;
+        return points[x, y, z];
+    }
 
     // ===================================================================================
     // ALPHA-BASED PROPERTY CALCULATIONS
