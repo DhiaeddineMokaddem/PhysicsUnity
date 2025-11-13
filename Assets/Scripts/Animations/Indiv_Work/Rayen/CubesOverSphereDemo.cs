@@ -34,7 +34,7 @@ public class CubesOverSphereDemo : MonoBehaviour
     public Vector2 groundPlaneSize = new Vector2(30f, 30f);
     public Color groundColor = new Color(0.85f, 0.85f, 0.85f, 1f);
 
-    private PhysicsManager _physicsManager;
+    private PhysicsManagerRayen _physicsManager;
     private DynamicSphere3D _sphere;
 
     void Start()
@@ -50,11 +50,11 @@ public class CubesOverSphereDemo : MonoBehaviour
 
     private void SetupPhysicsManager()
     {
-        _physicsManager = FindFirstObjectByType<PhysicsManager>();
+        _physicsManager = FindFirstObjectByType<PhysicsManagerRayen>();
         if (_physicsManager == null)
         {
             var go = new GameObject("PhysicsManager");
-            _physicsManager = go.AddComponent<PhysicsManager>();
+            _physicsManager = go.AddComponent<PhysicsManagerRayen>();
         }
 
         _physicsManager.groundLevel = groundLevel;
