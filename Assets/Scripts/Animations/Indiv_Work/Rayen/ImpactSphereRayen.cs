@@ -33,8 +33,8 @@ public class ImpactSphereRayen : MonoBehaviour
     // PURE MATH: Position stockée manuellement
     [HideInInspector] public Vector3 position;
     
-    private CollisionDetector collisionDetector;
-    private PhysicsManagerRayen physicsManager;
+    private CollisionDetectorRayen CollisionDetectorRayen;
+    private PhysicsManagerRayen PhysicsManagerRayen;
     private Vector3 acceleration = Vector3.zero;
     private bool hasImpacted = false;
     private Vector3 startPosition;
@@ -53,12 +53,12 @@ public class ImpactSphereRayen : MonoBehaviour
 
     void Start()
     {
-        physicsManager = FindObjectOfType<PhysicsManagerRayen>();
-        collisionDetector = physicsManager?.GetComponent<CollisionDetector>();
+        PhysicsManagerRayen = FindObjectOfType<PhysicsManagerRayen>();
+        CollisionDetectorRayen = PhysicsManagerRayen?.GetComponent<CollisionDetectorRayen>();
         
-        if (collisionDetector == null)
+        if (CollisionDetectorRayen == null)
         {
-            Debug.LogError("ImpactSphere: CollisionDetector non trouvé!");
+            Debug.LogError("ImpactSphere: CollisionDetectorRayen non trouvé!");
         }
         
         if (autoLaunch)
@@ -87,7 +87,7 @@ public class ImpactSphereRayen : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (physicsManager != null && physicsManager.pauseSimulation) return;
+        if (PhysicsManagerRayen != null && PhysicsManagerRayen.pauseSimulation) return;
         
         float deltaTime = Time.fixedDeltaTime;
         
@@ -115,7 +115,7 @@ public class ImpactSphereRayen : MonoBehaviour
 
     void DetectCollisions()
     {
-        if (collisionDetector == null) return;
+        if (CollisionDetectorRayen == null) return;
         
         RigidBody3D[] rigidBodies = FindObjectsOfType<RigidBody3D>();
         
@@ -124,7 +124,7 @@ public class ImpactSphereRayen : MonoBehaviour
             if (body == null || collidedThisFrame.Contains(body)) continue;
             
             CollisionInfo collision;
-            if (collisionDetector.TryDetectSphereCubeCollision(position, radius, body, out collision))
+            if (CollisionDetectorRayen.TryDetectSphereCubeCollision(position, radius, body, out collision))
             {
                 collidedThisFrame.Add(body);
                 
@@ -224,9 +224,9 @@ public class ImpactSphereRayen : MonoBehaviour
         Debug.Log($"  Énergie: {kineticEnergy:F2} J");
         Debug.Log($"  Force explosion: {explosionForce:F2} N");
         
-        if (physicsManager != null)
+        if (PhysicsManagerRayen != null)
         {
-            physicsManager.BreakConstraintsInRadius(impactPoint, breakRadius);
+            PhysicsManagerRayen.BreakConstraintsInRadius(impactPoint, breakRadius);
         }
         
         StartCoroutine(ApplyExplosionDelayed(impactPoint, explosionForce));
@@ -236,15 +236,15 @@ public class ImpactSphereRayen : MonoBehaviour
     {
         yield return new WaitForFixedUpdate();
         
-        if (physicsManager != null)
+        if (PhysicsManagerRayen != null)
         {
-            physicsManager.ApplyExplosion(impactPoint, breakRadius, force);
+            PhysicsManagerRayen.ApplyExplosion(impactPoint, breakRadius, force);
         }
     }
 
     void HandleGroundCollision()
     {
-        float groundLevel = physicsManager != null ? physicsManager.groundLevel : 0f;
+        float groundLevel = PhysicsManagerRayen != null ? PhysicsManagerRayen.groundLevel : 0f;
         float bottomY = position.y - radius;
         
         if (bottomY <= groundLevel)
@@ -255,10 +255,10 @@ public class ImpactSphereRayen : MonoBehaviour
             
             if (velocity.y < 0)
             {
-                float groundRestitution = physicsManager != null ? physicsManager.groundRestitution : 0.3f;
+                float groundRestitution = PhysicsManagerRayen != null ? PhysicsManagerRayen.groundRestitution : 0.3f;
                 velocity.y = -velocity.y * groundRestitution;
                 
-                float groundFriction = physicsManager != null ? physicsManager.groundFriction : 0.5f;
+                float groundFriction = PhysicsManagerRayen != null ? PhysicsManagerRayen.groundFriction : 0.5f;
                 velocity.x *= (1f - groundFriction);
                 velocity.z *= (1f - groundFriction);
             }

@@ -17,13 +17,13 @@ public class StaticSpherePlatform : MonoBehaviour
     public bool showGizmos = true;
 
     [Header("Collision Settings")]
-    public float localElasticity = 1.0f; // Multiplies PhysicsManager.globalElasticity
+    public float localElasticity = 1.0f; // Multiplies PhysicsManagerRayen.globalElasticity
 
     // Manual position storage for simulation (Transform only for rendering)
     [HideInInspector] public Vector3 position;
 
-    private CollisionDetector _collisionDetector;
-    private PhysicsManager _physicsManager;
+    private CollisionDetectorRayen _CollisionDetectorRayen;
+    private PhysicsManagerRayen _PhysicsManagerRayen;
     private GameObject _renderSphere;
 
     void Awake()
@@ -35,18 +35,18 @@ public class StaticSpherePlatform : MonoBehaviour
 
     void Start()
     {
-        // Find or create a PhysicsManager so ground/cube-cube are processed
-        _physicsManager = FindFirstObjectByType<PhysicsManager>();
-        if (_physicsManager == null)
+        // Find or create a PhysicsManagerRayen so ground/cube-cube are processed
+        _PhysicsManagerRayen = FindFirstObjectByType<PhysicsManagerRayen>();
+        if (_PhysicsManagerRayen == null)
         {
-            var go = new GameObject("PhysicsManager");
-            _physicsManager = go.AddComponent<PhysicsManager>();
+            var go = new GameObject("PhysicsManagerRayen");
+            _PhysicsManagerRayen = go.AddComponent<PhysicsManagerRayen>();
         }
 
         // Local collision detector for sphere-cube tests
-        _collisionDetector = gameObject.GetComponent<CollisionDetector>();
-        if (_collisionDetector == null)
-            _collisionDetector = gameObject.AddComponent<CollisionDetector>();
+        _CollisionDetectorRayen = gameObject.GetComponent<CollisionDetectorRayen>();
+        if (_CollisionDetectorRayen == null)
+            _CollisionDetectorRayen = gameObject.AddComponent<CollisionDetectorRayen>();
 
         // Sync visuals
         UpdateRenderTransform();
@@ -54,11 +54,11 @@ public class StaticSpherePlatform : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (_physicsManager != null && _physicsManager.pauseSimulation) return;
+        if (_PhysicsManagerRayen != null && _PhysicsManagerRayen.pauseSimulation) return;
 
         // Iterate all custom rigid bodies and collide with this immovable sphere
         var bodies = FindObjectsByType<RigidBody3D>(FindObjectsSortMode.None);
-        float elasticity = (_physicsManager != null ? _physicsManager.globalElasticity : 1f) * Mathf.Max(0f, localElasticity);
+        float elasticity = (_PhysicsManagerRayen != null ? _PhysicsManagerRayen.globalElasticity : 1f) * Mathf.Max(0f, localElasticity);
 
         for (int i = 0; i < bodies.Length; i++)
         {
@@ -66,10 +66,10 @@ public class StaticSpherePlatform : MonoBehaviour
             if (body == null || body.isKinematic) continue;
 
             CollisionInfo col;
-            if (_collisionDetector.TryDetectSphereCubeCollision(position, radius, body, out col))
+            if (_CollisionDetectorRayen.TryDetectSphereCubeCollision(position, radius, body, out col))
             {
                 // bodyA is the static sphere (null), bodyB is the cube
-                _collisionDetector.ResolveCollision(col, elasticity);
+                _CollisionDetectorRayen.ResolveCollision(col, elasticity);
             }
         }
 

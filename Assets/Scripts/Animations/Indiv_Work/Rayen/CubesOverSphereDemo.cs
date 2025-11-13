@@ -34,34 +34,34 @@ public class CubesOverSphereDemo : MonoBehaviour
     public Vector2 groundPlaneSize = new Vector2(30f, 30f);
     public Color groundColor = new Color(0.85f, 0.85f, 0.85f, 1f);
 
-    private PhysicsManagerRayen _physicsManager;
+    private PhysicsManagerRayen _PhysicsManagerRayen;
     private DynamicSphere3D _sphere;
 
     void Start()
     {
-        SetupPhysicsManager();
+        SetupPhysicsManagerRayen();
         CreateSphere();
         SpawnCubesAboveSphere();
         CreateGroundVisual();
 
         // Register all bodies for the physics manager
-        _physicsManager.RegisterAllBodies();
+        _PhysicsManagerRayen.RegisterAllBodies();
     }
 
-    private void SetupPhysicsManager()
+    private void SetupPhysicsManagerRayen()
     {
-        _physicsManager = FindFirstObjectByType<PhysicsManagerRayen>();
-        if (_physicsManager == null)
+        _PhysicsManagerRayen = FindFirstObjectByType<PhysicsManagerRayen>();
+        if (_PhysicsManagerRayen == null)
         {
-            var go = new GameObject("PhysicsManager");
-            _physicsManager = go.AddComponent<PhysicsManagerRayen>();
+            var go = new GameObject("PhysicsManagerRayen");
+            _PhysicsManagerRayen = go.AddComponent<PhysicsManagerRayen>();
         }
 
-        _physicsManager.groundLevel = groundLevel;
-        _physicsManager.groundRestitution = groundRestitution;
-        _physicsManager.groundFriction = groundFriction;
-        _physicsManager.globalElasticity = globalElasticity;
-        _physicsManager.pauseSimulation = false;
+        _PhysicsManagerRayen.groundLevel = groundLevel;
+        _PhysicsManagerRayen.groundRestitution = groundRestitution;
+        _PhysicsManagerRayen.groundFriction = groundFriction;
+        _PhysicsManagerRayen.globalElasticity = globalElasticity;
+        _PhysicsManagerRayen.pauseSimulation = false;
     }
 
     private void CreateSphere()

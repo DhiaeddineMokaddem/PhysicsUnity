@@ -29,7 +29,7 @@ public class PhysicsManagerRayen : MonoBehaviour
     #region Private Fields
     private List<RigidBody3D> rigidBodies = new List<RigidBody3D>();
     private List<RigidConstraint> constraints = new List<RigidConstraint>();
-    private CollisionDetector collisionDetector;
+    private CollisionDetectorRayen CollisionDetectorRayen;
     private float accumulator = 0f;
     private List<DynamicSphere3D> spheres = new List<DynamicSphere3D>();
     #endregion
@@ -37,7 +37,7 @@ public class PhysicsManagerRayen : MonoBehaviour
     #region Initialization
     void Start()
     {
-        collisionDetector = gameObject.AddComponent<CollisionDetector>();
+        CollisionDetectorRayen = gameObject.AddComponent<CollisionDetectorRayen>();
         RegisterAllBodies();
     }
 
@@ -84,7 +84,7 @@ public class PhysicsManagerRayen : MonoBehaviour
         spheres.RemoveAll(s => s == null);
 
         float deltaTime = timeStep / substeps;
-        int iterations = collisionDetector != null ? Mathf.Max(1, collisionDetector.solverIterations) : 1;
+        int iterations = CollisionDetectorRayen != null ? Mathf.Max(1, CollisionDetectorRayen.solverIterations) : 1;
 
         for (int i = 0; i < substeps; i++)
         {
@@ -131,9 +131,9 @@ public class PhysicsManagerRayen : MonoBehaviour
                 if (rigidBodies[i] == null || rigidBodies[j] == null) continue;
 
                 CollisionInfo collision;
-                if (collisionDetector.DetectCubeCollision(rigidBodies[i], rigidBodies[j], out collision))
+                if (CollisionDetectorRayen.DetectCubeCollision(rigidBodies[i], rigidBodies[j], out collision))
                 {
-                    collisionDetector.ResolveCollision(collision, globalElasticity);
+                    CollisionDetectorRayen.ResolveCollision(collision, globalElasticity);
                 }
             }
         }
@@ -153,9 +153,9 @@ public class PhysicsManagerRayen : MonoBehaviour
                 if (b == null) continue;
 
                 CollisionInfo col;
-                if (collisionDetector.TryDetectSphereCubeCollision(s.position, s.radius, b, out col))
+                if (CollisionDetectorRayen.TryDetectSphereCubeCollision(s.position, s.radius, b, out col))
                 {
-                    collisionDetector.ResolveSphereCubeCollision(s, b, col, globalElasticity);
+                    CollisionDetectorRayen.ResolveSphereCubeCollision(s, b, col, globalElasticity);
                 }
             }
         }
