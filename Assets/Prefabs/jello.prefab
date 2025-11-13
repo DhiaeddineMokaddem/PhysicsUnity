@@ -53,6 +53,11 @@ MonoBehaviour:
   leftKey: 97
   rightKey: 100
   jumpKey: 32
+  enableAlphaControl: 1
+  decreaseAlphaKey: 113
+  increaseAlphaKey: 101
+  alphaChangeRate: 0.5
+  minAlpha: 0
 --- !u!114 &2158240967417967330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65,18 +70,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd34c07c5c0f7ff46991e329a5b6922b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControllableSoftJello
+  alpha: 0.5
   gridSize: 4
   cellSize: 0.3
   pointMass: 0.1
-  stiffness: 10
-  damping: 2.5
+  maxStiffness: 50
+  minStiffness: 20
+  minDamping: 1.5
+  maxDamping: 4
   gravity: -9.81
-  restitution: 0.3
+  maxRestitution: 0.3
+  minRestitution: 0.05
   friction: 0.85
-  solverIterations: 4
-  pointRadius: 0.1
+  solverIterations: 8
+  pointRadius: 0.15
   moveForce: 1
-  jumpForce: 80
+  jumpForce: 50
   inputDirection: {x: 0, y: 0, z: 0}
   jelloMaterial: {fileID: 2100000, guid: 8eb49e09576f66a458e7787f4de84557, type: 2}
   drawDebug: 1

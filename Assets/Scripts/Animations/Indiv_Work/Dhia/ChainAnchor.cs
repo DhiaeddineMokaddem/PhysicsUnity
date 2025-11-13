@@ -1,43 +1,54 @@
 //Manages anchor points
 using UnityEngine;
-
 public class ChainAnchor
 {
-    public Transform transform;
+    public CustomChainPhysics customChainPhysics;
+    public bool isLinkedToStart;
     public Vector3 position;
     public Vector3 prevPosition;
     public float strength;
     public bool isActive;
 
-    public ChainAnchor(Transform anchorTransform, float anchorStrength)
+    public ChainAnchor(CustomChainPhysics customChainPhysics, bool linkedStart, float anchorStrength)
     {
-        transform = anchorTransform;
         strength = anchorStrength;
         isActive = true;
-
-        if (transform != null)
+        isLinkedToStart = linkedStart;
+        this.customChainPhysics = customChainPhysics;
+        if (this.customChainPhysics != null)
         {
-            position = transform.position;
+            position = anchorPosition();
             prevPosition = position;
         }
     }
 
     public void UpdatePosition()
     {
-        if (transform != null && isActive)
+        if (anchorPosition() != null && isActive)
         {
             prevPosition = position;
-            position = transform.position;
+            position = anchorPosition();
         }
     }
 
     public void Reattach()
     {
         isActive = true;
-        if (transform != null)
+        if (anchorPosition() != null)
         {
-            position = transform.position;
+            position = anchorPosition();
             prevPosition = position;
+        }
+    }
+    public Vector3 anchorPosition()
+    {
+        if (isLinkedToStart)
+        {
+            return customChainPhysics.anchorStart;
+        }
+        else
+        {
+            return customChainPhysics.anchorEnd;
         }
     }
 }

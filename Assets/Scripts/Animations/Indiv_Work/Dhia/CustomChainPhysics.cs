@@ -10,8 +10,8 @@ public class CustomChainPhysics : MonoBehaviour
     [SerializeField] private GameObject chainLinkPrefab;
 
     [Header("Anchor Settings")]
-    [SerializeField] private Transform anchorStart;
-    [SerializeField] private Transform anchorEnd;
+    [SerializeField] public Vector3 anchorStart;
+    [SerializeField] public Vector3 anchorEnd;
     [SerializeField] private float anchorStartStrength = 100f;
     [SerializeField] private float anchorEndStrength = 100f;
     [SerializeField] private float maxStretchDistance = 15f;
@@ -41,8 +41,8 @@ public class CustomChainPhysics : MonoBehaviour
     {
         // Initialize modules
         physics = new ChainPhysics(gravity, damping, linkLength, constraintIterations, stiffness);
-        startAnchor = new ChainAnchor(anchorStart, anchorStartStrength);
-        endAnchor = new ChainAnchor(anchorEnd, anchorEndStrength);
+        startAnchor = new ChainAnchor(this, true, anchorStartStrength);
+        endAnchor = new ChainAnchor(this, false, anchorEndStrength);
         breaking = new ChainBreaking(maxStretchDistance);
         breakReaction = new BreakReaction(breakReactionAlpha);
         visualizer = new ChainVisualizer(linkRadius, linkLength, chainLinkPrefab, transform);
