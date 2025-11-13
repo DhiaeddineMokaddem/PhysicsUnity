@@ -159,6 +159,7 @@ public class ControllableSoftJello : MonoBehaviour
     void CreateMesh()
     {
         mesh = new Mesh();
+        mesh.MarkDynamic(); // dynamic deforming mesh
         GetComponent<MeshFilter>().mesh = mesh;
         if (jelloMaterial)
             GetComponent<MeshRenderer>().material = jelloMaterial;
@@ -168,6 +169,7 @@ public class ControllableSoftJello : MonoBehaviour
         mesh.vertices = cube.vertices;
         mesh.triangles = cube.triangles;
         mesh.RecalculateNormals();
+        mesh.RecalculateBounds(); // ensure initial bounds are valid
 
         baseVertices = mesh.vertices;
         deformedVertices = new Vector3[baseVertices.Length];
@@ -299,6 +301,7 @@ public class ControllableSoftJello : MonoBehaviour
 
         mesh.vertices = deformedVertices;
         mesh.RecalculateNormals();
+        mesh.RecalculateBounds(); // keep bounds current to avoid frustum-culling when camera is close
     }
 
     void OnDrawGizmos()
