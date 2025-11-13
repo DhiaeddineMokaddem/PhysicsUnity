@@ -1,93 +1,524 @@
-# PhysicsUnity
+# PhysicsUnity - Custom Physics Simulation Framework
 
+A comprehensive Unity-based physics simulation project implementing multiple physics systems **from scratch** without using Unity's built-in physics engine. All simulations use pure mathematical implementations of physics principles including custom integration methods, collision detection, and constraint solving.
 
+---
 
-## Getting started
+## 🎯 Project Overview
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+This project demonstrates advanced physics programming through five distinct simulations, each showcasing different aspects of computational physics:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+1. **Chain Physics** - Verlet integration with breaking mechanics
+2. **Soft Body Jello** - 3D mass-spring lattice with deformable mesh
+3. **Plate Fracture** - Rigid body dynamics with spring-based fracture
+4. **Rigid Body Dynamics** - Basic OBB collision and stacking
+5. **Wall Demolition** - High-speed impact with constraint breaking
 
-## Add your files
+### Core Philosophy
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+**Pure Mathematical Physics - No Unity Physics Engine**
+
+- ❌ No `Rigidbody` components
+- ❌ No Unity `Collider` components  
+- ❌ No Unity physics engine calls
+- ✅ Manual position/velocity integration
+- ✅ Custom collision detection algorithms
+- ✅ Manual transform matrix calculations
+- ✅ Position-based and impulse-based dynamics
+
+---
+
+## 📁 Project Structure
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/dhiamok1/physicsunity.git
-git branch -M main
-git push -uf origin main
+PhysicsUnity/
+├── Assets/Scripts/
+│   └── Animations/
+│       ├── Core/                    # Shared physics utilities
+│       │   ├── Physics/             
+│       │   │   └── Spring.cs        # Mass-spring system classes
+│       │   ├── ManualMatrix.cs      # Custom 4x4 transform matrices
+│       │   ├── IntegrationUtils.cs  # Euler, Verlet, Semi-implicit integrators
+│       │   ├── CollisionUtils.cs    # Collision detection algorithms
+│       │   ├── PhysicsConstants.cs  # Physical constants (gravity, damping, etc.)
+│       │   ├── MathUtils.cs         # Matrix operations, inertia tensors
+│       │   ├── TransformUtils.cs    # Coordinate space transformations
+│       │   ├── VisualRenderer.cs    # Manual mesh rendering
+│       │   └── ...
+│       └── Indiv_Work/              # Individual simulations
+│           ├── Dhia/                # Chain physics
+│           │   ├── ChainLink.cs
+│           │   ├── ChainPhysics.cs
+│           │   ├── ChainVisualizer.cs
+│           │   ├── ChainBreaking.cs
+│           │   └── ChainAnchor.cs
+│           ├── nour/                # Soft body jello
+│           │   └── ControllableSoftJello.cs
+│           ├── aziz/                # Plate fracture
+│           │   ├── RigidBody3D.cs
+│           │   └── EnergizedPlateFracture.cs
+│           ├── Rayen/               # Rigid body dynamics
+│           │   └── DynamicSphere3D.cs
+│           └── yahya/               # Wall demolition
+│               ├── RigidBody3DYahya.cs
+│               ├── ImpactSphereYahya.cs
+│               ├── StructureBuilderYahya.cs
+│               ├── RigidConstraintYahya.cs
+│               └── SimulationControllerYahya.cs
 ```
 
-## Integrate with your tools
+---
 
-- [ ] [Set up project integrations](https://gitlab.com/dhiamok1/physicsunity/-/settings/integrations)
+## 🔧 Core Components
 
-## Collaborate with your team
+### 1. Integration Methods (`IntegrationUtils.cs`)
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Three numerical integration schemes for physics simulation:
 
-## Test and Deploy
+#### Explicit Euler
+```csharp
+// x(t+dt) = x(t) + v(t)*dt
+Vector3 newPos = IntegrationUtils.IntegratePositionEuler(position, velocity, deltaTime);
+```
+- **Use case:** Simple systems, quick prototyping
+- **Stability:** Low (can explode with large dt)
 
-Use the built-in continuous integration in GitLab.
+#### Verlet Integration
+```csharp
+// x(t+dt) = 2*x(t) - x(t-dt) + a(t)*dt²
+Vector3 newPos = IntegrationUtils.IntegratePositionVerlet(
+    currentPosition, previousPosition, acceleration, deltaTime);
+```
+- **Use case:** Constraint-based systems (chains, cloth)
+- **Stability:** High (energy-conserving, time-reversible)
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### Semi-Implicit Euler (Symplectic)
+```csharp
+// Update velocity first, THEN position using new velocity
+IntegrationUtils.IntegrateSemiImplicitEuler(
+    ref position, ref velocity, acceleration, deltaTime);
+```
+- **Use case:** Rigid body dynamics
+- **Stability:** Medium-High (more stable than explicit Euler)
 
-***
+### 2. Collision Detection (`CollisionUtils.cs`)
 
-# Editing this README
+Custom collision detection for primitive shapes:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- **Sphere-Sphere:** Distance test
+- **Sphere-Plane:** Point-plane distance
+- **Sphere-OBB:** Closest point on oriented bounding box
+- **Sphere-AABB:** Axis-aligned bounding box test
 
-## Suggestions for a good README
+```csharp
+// Example: Sphere-sphere collision
+bool hasCollision = CollisionUtils.CheckSphereSphereCollision(
+    centerA, radiusA, centerB, radiusB, 
+    out Vector3 normal, out float penetration);
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 3. Manual Transform System (`ManualMatrix.cs`)
 
-## Name
-Choose a self-explaining name for your project.
+Complete bypass of Unity's Transform component for full control:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```csharp
+// Build transformation matrix from position and rotation
+ManualMatrix transform = ManualMatrix.TR(position, rotation);
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+// Transform points manually
+Vector3 worldPoint = transform.MultiplyPoint(localPoint);
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+// Invert for reverse transformation
+ManualMatrix inverse = transform.InverseRigid();
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### 4. Physics Constants (`PhysicsConstants.cs`)
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Centralized physical constants:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```csharp
+PhysicsConstants.GRAVITY = 9.81f;                    // m/s²
+PhysicsConstants.GRAVITY_VECTOR = (0, -9.81, 0);   // World space
+PhysicsConstants.DEFAULT_RESTITUTION = 0.5f;        // Bounciness
+PhysicsConstants.DEFAULT_FRICTION = 0.3f;           // Surface friction
+PhysicsConstants.EPSILON = 1e-8f;                   // Numerical precision
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## 🎮 Simulations
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### 1. Chain Physics (Dhia)
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**Description:** A physically accurate chain with breaking mechanics using Verlet integration and position-based constraints.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+**Key Features:**
+- Verlet integration (no explicit velocity needed)
+- Distance constraints maintain link spacing
+- Tension-based breaking when stretched beyond threshold
+- Custom rendering via `Graphics.DrawMesh` (no Transform setters)
+- Anchor attachment with dynamic reattachment
 
-## License
-For open source projects, say how it is licensed.
+**Physics Principles:**
+- **Verlet Integration:** `x(t+dt) = 2*x(t) - x(t-dt) + a*dt²`
+- **Position-Based Dynamics:** Directly correct positions to satisfy constraints
+- **Constraint Iteration:** Multiple solver passes for stability
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+**Key Code:**
+```csharp
+// Verlet integration
+Vector3 temp = link.position;
+Vector3 acceleration = Vector3.down * gravity;
+link.position = link.position + (link.position - link.prevPosition) * damping 
+                + acceleration * dt * dt;
+link.prevPosition = temp;
+
+// Distance constraint
+Vector3 delta = link2.position - link1.position;
+float currentDist = delta.magnitude;
+float diff = (currentDist - linkLength) / currentDist;
+Vector3 correction = delta * diff * 0.5f;
+link1.position += correction;
+link2.position -= correction;
+```
+
+**Controls:**
+- Chain automatically hangs between two anchors
+- Breaking occurs when tension exceeds threshold
+- Visual feedback shows tension via color (cyan → red)
+
+---
+
+### 2. Soft Body Jello (Nour)
+
+**Description:** A deformable jello cube using a 3D mass-spring lattice with alpha-controlled stiffness.
+
+**Key Features:**
+- 3D lattice of mass points (e.g., 4×4×4 = 64 points)
+- Structural, shear, and bend springs
+- Alpha parameter controls stiffness/damping (0 = soft & bouncy, 1 = stiff & rigid)
+- Trilinear interpolation for smooth mesh deformation
+- Sphere-OBB collision detection
+- User controllable with force-based movement
+
+**Physics Principles:**
+- **Hooke's Law:** F = -k·Δx (spring force proportional to extension)
+- **Mass-Spring System:** Network of connected springs forms volumetric structure
+- **Trilinear Interpolation:** Smooth mesh deformation from 8 corner points
+
+**Key Code:**
+```csharp
+// Spring force application
+Vector3 delta = pointB.position - pointA.position;
+float extension = delta.magnitude - restLength;
+Vector3 springForce = stiffness * extension * delta.normalized;
+
+// Alpha-controlled properties
+float currentStiffness = Mathf.Lerp(minStiffness, maxStiffness, alpha);
+float currentDamping = Mathf.Lerp(minDamping, maxDamping, alpha);
+float currentRestitution = Mathf.Lerp(maxRestitution, minRestitution, alpha);
+
+// Trilinear interpolation for mesh deformation
+Vector3 deformedVertex = 
+    c000 * (1-u) * (1-v) * (1-w) +
+    c100 * u * (1-v) * (1-w) +
+    c010 * (1-u) * v * (1-w) +
+    // ... (8 corners total)
+    c111 * u * v * w;
+```
+
+**Controls:**
+- **Arrow Keys / WASD:** Move jello horizontally
+- **Space:** Jump
+- **Alpha Slider:** Adjust stiffness (0-1)
+
+---
+
+### 3. Plate Fracture (Aziz)
+
+**Description:** Rigid body fracture simulation using Baraff-style dynamics with spring-based constraints and energy conversion on break.
+
+**Key Features:**
+- Full 6DOF rigid body dynamics (linear + angular)
+- Spring constraints between adjacent cubes
+- Elastic potential energy converts to kinetic on fracture
+- Impulse-based collision with effective mass calculation
+- Exponential map for rotation integration
+
+**Physics Principles:**
+- **Rigid Body Equation:** F = ma, τ = Iα
+- **Inertia Tensor:** I = (1/12)m(h² + d²) for box
+- **Baraff Effective Mass:** Accounts for rotation in impulse calculation
+- **Energy Conversion:** E_potential = ½kx² → E_kinetic = ½mv²
+
+**Key Code:**
+```csharp
+// Apply spring force with torque
+Vector3 rA_world = cubeA.rotation * attachmentPointLocal;
+Vector3 posA = cubeA.position + rA_world;
+Vector3 springForce = springK * extension * direction;
+
+cubeA.velocity += (springForce / cubeA.mass) * dt;
+cubeA.angularVelocity += I_inv * Cross(rA_world, springForce) * dt;
+
+// Fracture: convert elastic energy to kinetic
+float elasticEnergy = 0.5f * springK * extension * extension;
+float impulseEnergy = elasticEnergy * fractureAlpha;
+float impulseMag = Mathf.Sqrt(2f * impulseEnergy * mass);
+```
+
+**Controls:**
+- Plate automatically fractures on collision with sphere
+- Parameter tuning via inspector (spring stiffness, fracture alpha)
+
+---
+
+### 4. Rigid Body Dynamics (Rayen)
+
+**Description:** Basic rigid body cubes dropping onto a sphere, demonstrating collision and stacking.
+
+**Key Features:**
+- Simple rigid body implementation with inertia tensors
+- OBB (oriented bounding box) collision detection
+- Impulse-based collision resolution
+- Multiple bodies stacking and interacting
+
+**Physics Principles:**
+- **Newton's Law of Restitution:** j = -(1 + e)·v_n / (1/m_a + 1/m_b)
+- **OBB Collision:** Separating Axis Theorem (SAT)
+- **Stacking:** Multiple rigid bodies in contact
+
+**Key Code:**
+```csharp
+// Rigid body integration
+if (useGravity)
+    velocity += PhysicsConstants.GRAVITY_VECTOR * deltaTime;
+
+velocity *= (1f - linearDamping * deltaTime);
+position += velocity * deltaTime;
+rotation = IntegrationUtils.IntegrateRotationQuaternion(
+    rotation, angularVelocity, deltaTime);
+
+// Impulse resolution
+float vn = Vector3.Dot(relativeVelocity, normal);
+float j = -(1f + restitution) * vn / (1f/massA + 1f/massB);
+Vector3 impulse = j * normal;
+bodyA.velocity += impulse / bodyA.mass;
+bodyB.velocity -= impulse / bodyB.mass;
+```
+
+**Controls:**
+- Automatic simulation (cubes fall and stack)
+- Can spawn additional cubes via code
+
+---
+
+### 5. Wall Demolition (Yahya)
+
+**Description:** A fast-moving sphere (75 m/s) crashes into a wall of interconnected cubes, demonstrating high-velocity impact and structural destruction.
+
+**Key Features:**
+- Large wall structure (15×10×1 = 150 cubes)
+- High-speed projectile (75 m/s = 270 km/h!)
+- Breakable rigid constraints between cubes
+- Radial constraint breaking propagation
+- Interactive launch controls
+- Real-time statistics display
+
+**Physics Principles:**
+- **Kinetic Energy:** E = ½mv² = ½(10)(75)² = 28,125 Joules
+- **Radial Damage:** Constraints break in expanding sphere from impact
+- **Constraint Breaking:** Force threshold exceeded → connection breaks
+- **Energy Dissipation:** Small loss per collision prevents unrealistic bouncing
+
+**Key Code:**
+```csharp
+// Launch sphere at high speed
+public void Launch()
+{
+    Vector3 direction = launchFrom == LaunchSide.Right ? Vector3.left : Vector3.right;
+    velocity = direction * launchSpeed;  // 75 m/s!
+    float kineticEnergy = 0.5f * mass * launchSpeed * launchSpeed;
+    Debug.Log($"Energy: {kineticEnergy:F0} J");  // 28,125 Joules!
+}
+
+// Break nearby constraints on impact
+void BreakNearbyConstraints(Vector3 impactPoint, float radius)
+{
+    foreach (var constraint in constraints)
+    {
+        Vector3 midpoint = (constraint.bodyA.position + constraint.bodyB.position) * 0.5f;
+        float dist = Vector3.Distance(impactPoint, midpoint);
+        
+        if (dist < radius && !constraint.isBroken)
+        {
+            constraint.Break();
+            
+            // Apply radial explosion force
+            Vector3 explosionDir = (midpoint - impactPoint).normalized;
+            float forceMag = (1f - dist/radius) * 100f;
+            constraint.bodyA.AddImpulse(explosionDir * forceMag);
+        }
+    }
+}
+```
+
+**Controls:**
+- **Space:** Launch sphere
+- **R:** Reset/rebuild wall
+- **S:** Switch launch side (left ↔ right)
+- **↑/↓:** Increase/decrease launch speed
+- **I/K:** Adjust impact multiplier
+- **+/-:** Adjust elasticity
+
+**Statistics Display:**
+- Current velocity and kinetic energy
+- Launch speed and direction
+- Impact multiplier
+- Number of broken constraints
+
+---
+
+## 📊 Comparison Table
+
+| Simulation | Integration | Collision | Key Physics | Topology | Control |
+|------------|-------------|-----------|-------------|----------|---------|
+| **Chain** | Verlet | None (constraints only) | Distance constraints, breaking | Linear chain | Automatic |
+| **Jello** | Verlet | Sphere-OBB | Mass-spring lattice | 3D volumetric | Player controlled |
+| **Fracture** | Semi-implicit | Sphere-impulse | Energy conversion | 5×4 plate | Automatic |
+| **Rigid Body** | Semi-implicit | OBB-Sphere | Stacking | Independent boxes | Automatic |
+| **Wall** | Semi-implicit | Sphere-OBB | High-speed impact | 15×10×1 wall | Interactive launch |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Unity 2021.3 or later
+- Basic understanding of C# and physics
+
+### Setup
+1. Clone the repository
+2. Open the project in Unity
+3. Navigate to simulation scenes in `Assets/Scenes/`
+4. Press Play to run
+
+### Running a Simulation
+
+Each simulation has its own scene:
+- `ChainPhysics.unity` - Chain simulation
+- `JelloSimulation.unity` - Soft body jello
+- `PlateFracture.unity` - Plate fracture
+- `RigidBodyDemo.unity` - Rigid body stacking
+- `WallDemolition.unity` - Wall demolition
+
+---
+
+## 🔬 Technical Highlights
+
+### Pure Math Approach
+
+All simulations avoid Unity's physics engine and implement everything from scratch:
+
+```csharp
+// NO: Using Unity physics
+transform.position = newPos;  // ❌
+rigidbody.AddForce(force);    // ❌
+
+// YES: Manual math
+position = position + velocity * deltaTime;  // ✅
+velocity = velocity + (force / mass) * deltaTime;  // ✅
+visualRenderer.UpdatePosition(position);  // ✅
+```
+
+### Numerical Stability Techniques
+
+1. **Position-Based Dynamics:** More stable than force-based for constraints
+2. **Damping:** Essential for all systems to prevent energy buildup
+3. **Constraint Iteration:** Multiple solver passes (e.g., 8 iterations for jello)
+4. **Impulse Clamping:** Prevent extreme forces from causing explosions
+5. **Energy Dissipation:** Small loss per collision prevents unrealistic behavior
+
+### Performance Optimizations
+
+1. **Spatial Partitioning:** Used in gas simulation (Sweep and Prune)
+2. **AABB Early Exit:** Quick rejection before detailed collision tests
+3. **Caching:** Precompute inertia tensors, mesh data
+4. **Constraint Culling:** Only check nearby constraints for breaking
+5. **Fixed Timestep:** Physics update decoupled from frame rate
+
+---
+
+## 📚 Educational Value
+
+This project demonstrates:
+
+1. **Numerical Integration Methods** - Euler, Verlet, Semi-implicit
+2. **Collision Detection Algorithms** - Sphere, OBB, AABB tests
+3. **Constraint Solving** - Distance, spring, rigid constraints
+4. **Rigid Body Dynamics** - Inertia tensors, torque, angular momentum
+5. **Soft Body Physics** - Mass-spring systems, mesh deformation
+6. **Fracture Mechanics** - Energy conversion, constraint breaking
+7. **High-Velocity Physics** - Maintaining stability at extreme speeds
+8. **Matrix Mathematics** - Transformations, rotations, inversions
+
+### Key Physics Concepts
+
+- **Newton's Laws:** F = ma, action-reaction, inertia
+- **Conservation Laws:** Energy, momentum (linear and angular)
+- **Hooke's Law:** F = -kx (springs)
+- **Collision Response:** Restitution, friction, impulses
+- **Rotational Dynamics:** Torque, inertia tensors, angular velocity
+
+---
+
+## 🛠️ Extending the Project
+
+### Adding a New Simulation
+
+1. Create folder in `Assets/Scripts/Animations/Indiv_Work/YourName/`
+2. Use core utilities from `PhysicsSimulation.Core` namespace
+3. Implement custom physics logic
+4. Register with `PhysicsManager` if using centralized updates
+5. Create scene and test
+
+### Custom Integration Method
+
+```csharp
+public static class CustomIntegrator
+{
+    public static Vector3 IntegrateCustom(
+        Vector3 position, 
+        Vector3 velocity, 
+        Vector3 acceleration,
+        float deltaTime)
+    {
+        // Your custom integration formula here
+        return newPosition;
+    }
+}
+```
+
+### Custom Collision Detection
+
+```csharp
+public static class CustomCollision
+{
+    public static bool CheckCustomShape(
+        ShapeA a, 
+        ShapeB b, 
+        out ContactInfo contact)
+    {
+        // Your collision algorithm here
+        return hasCollision;
+    }
+}
+```
+
+## 👥 Contributors
+
+- **Dhia** - Chain Physics with Breaking Mechanics
+- **Nour** - Controllable Soft Body Jello
+- **Aziz** - Energized Plate Fracture
+- **Rayen** - Rigid Body Dynamics
+- **Yahya** - Wall Demolition with High-Speed Impact
