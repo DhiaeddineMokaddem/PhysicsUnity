@@ -1,103 +1,151 @@
+// Import Unity's core engine functionality
 using UnityEngine;
+// Import C# generic collections
 using System.Collections.Generic;
+// Import Aziz's physics namespace for RigidBody3D
 using PhysicsSimulation.Indiv_Work.Aziz;
+// Import core physics utilities
 using PhysicsSimulation.Core;
 
 /// <summary>
-/// Sphère qui impacte la structure de cubes - VERSION PURE MATH
+/// Sphere that impacts the structure of cubes - PURE MATH VERSION
 /// FIXED: Proper initialization order using Awake()
 /// Uses VisualRenderer for visual updates only - no direct transform manipulation
+/// ALL POSITION UPDATES DONE MANUALLY - NO transform.position!
 /// </summary>
 public class ImpactSphere : MonoBehaviour
 {
-    [Header("Propriétés de la Sphère")]
+    [Header("Sphere Properties")] // Unity Inspector header
+    // Radius of the sphere in meters - determines size and collision volume
     public float radius = 1.0f;
+    // Mass in kilograms - determines momentum and impact force
     public float mass = 5.0f;
+    // Linear velocity in meters per second - rate of position change
     public Vector3 velocity = Vector3.zero;
+    // Coefficient of restitution (0 = inelastic, 1 = perfectly elastic)
     public float restitution = 0.3f;
     
-    [Header("Impact")]
+    [Header("Impact")] // Unity Inspector header for impact settings
+    // Multiplier for impact force transferred to cubes on collision
     public float impactMultiplier = 0.5f;
+    // Radius within which cubes are affected on impact
     public float breakRadius = 3.0f;
+    // If true, sphere launches automatically on Start()
     public bool autoLaunch = false;
+    // Direction to launch the sphere when autoLaunch is true
     public Vector3 launchDirection = Vector3.down;
+    // Initial speed when launching in meters per second
     public float launchSpeed = 10f;
     
-    [Header("Limites physiques")]
+    [Header("Physical Limits")] // Unity Inspector header for safety limits
+    // Maximum impulse that can be applied per collision (prevents explosions)
     public float maxImpulsePerCollision = 50f;
+    // Fraction of energy lost per collision (0 = no loss, 1 = all energy lost)
     [Range(0f, 1f)]
     public float energyLossPerCollision = 0.3f;
     
-    [Header("Visualisation")]
+    [Header("Visualization")] // Unity Inspector header for visual settings
+    // Color of the sphere in debug visualization
     public Color sphereColor = Color.red;
+    // If true, shows trajectory and velocity vectors
     public bool showTrajectory = true;
     
-    // PURE MATH: Position stockée manuellement
+    // PURE MATH: Position stored manually (NOT using Unity Transform!)
+    // This is the center of the sphere in world space
     [HideInInspector] public Vector3 position;
     
+    // Reference to collision detection system
     private CollisionDetector collisionDetector;
+    // Reference to physics manager that coordinates simulation
     private PhysicsManager physicsManager;
+    // Current acceleration in meters per second squared (from gravity and forces)
     private Vector3 acceleration = Vector3.zero;
+    // Flag tracking if sphere has impacted the structure yet
     private bool hasImpacted = false;
+    // Original starting position for reset functionality
     private Vector3 startPosition;
+    // Set of bodies collided with this frame (prevents duplicate collision responses)
     private HashSet<RigidBody3D> collidedThisFrame = new HashSet<RigidBody3D>();
+    // Total number of collisions that have occurred
     private int collisionCount = 0;
+    // Reference to visual renderer that updates mesh vertices manually
     private VisualRenderer visualRenderer;
 
     /// <summary>
-    /// FIXED: Use Awake() for immediate initialization
+    /// Unity lifecycle method - called when script instance is being loaded
+    /// FIXED: Use Awake() for immediate initialization before any other scripts run
     /// </summary>
     void Awake()
     {
+        // Try to get existing VisualRenderer component
         visualRenderer = GetComponent<VisualRenderer>();
+        // If none exists, add one to handle manual mesh transformation
         if (visualRenderer == null)
         {
             visualRenderer = gameObject.AddComponent<VisualRenderer>();
         }
 
-        // PURE MATH: Initialiser la position depuis VisualRenderer
+        // PURE MATH: Initialize position from VisualRenderer (reads GameObject's initial position)
         position = visualRenderer.GetPosition();
+        // Store starting position for potential reset
         startPosition = position;
     }
 
+    // Unity lifecycle method - called after all Awake() calls
     void Start()
     {
+        // Find the PhysicsManager in the scene
         physicsManager = FindObjectOfType<PhysicsManager>();
+        // Get CollisionDetector from the PhysicsManager
         collisionDetector = physicsManager?.GetComponent<CollisionDetector>();
         
+        // Safety check: verify collision detector exists
         if (collisionDetector == null)
         {
-            Debug.LogError("ImpactSphere: CollisionDetector non trouvé!");
+            Debug.LogError("ImpactSphere: CollisionDetector not found!");
         }
         
+        // If autoLaunch enabled, start moving immediately
         if (autoLaunch)
         {
             Launch();
         }
         
-        // Mettre à jour le Transform visuel
+        // Update visual mesh to match initial position
         UpdateVisualTransform();
     }
 
+    // Launch sphere with configured direction and speed
     public void Launch()
     {
+        // Set velocity: normalize direction and multiply by speed
         velocity = launchDirection.normalized * launchSpeed;
+        // Reset impact flag
         hasImpacted = false;
+        // Reset collision counter
         collisionCount = 0;
     }
 
+    // Launch sphere towards a specific target position
     public void LaunchTowards(Vector3 target)
     {
+        // Calculate direction from current position to target
         Vector3 direction = (target - position).normalized;
+        // Set velocity towards target at configured speed
         velocity = direction * launchSpeed;
+        // Reset impact flag
         hasImpacted = false;
+        // Reset collision counter
         collisionCount = 0;
     }
 
+    // Unity fixed update - called at fixed time intervals for physics
     void FixedUpdate()
     {
+        // Skip physics if simulation is paused
         if (physicsManager != null && physicsManager.pauseSimulation) return;
         
+        // Get physics time step
         float deltaTime = Time.fixedDeltaTime;
         
         collidedThisFrame.Clear();
@@ -335,3 +383,4 @@ public class ImpactSphere : MonoBehaviour
 #endif
     }
 }
+
