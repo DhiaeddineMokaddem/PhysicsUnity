@@ -1211,7 +1211,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2158240967417967330, guid: 7decd7bca67d35d4e974f339dd67bf48, type: 3}
       propertyPath: minStiffness
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 2158240967417967330, guid: 7decd7bca67d35d4e974f339dd67bf48, type: 3}
       propertyPath: solverIterations

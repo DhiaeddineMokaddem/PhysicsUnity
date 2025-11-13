@@ -54,8 +54,17 @@ namespace PhysicsSimulation.Core.Physics
             Vector3 delta = b.position - a.position;
             float dist = delta.magnitude;
             if (dist <= 1e-6f) return;
-            float diff = (dist - restLength) / dist;
-            Vector3 correction = delta * 0.5f * stiffness * 0.01f * diff;
+            
+            // Calculate spring error (how much it's stretched/compressed)
+            float error = dist - restLength;
+            
+            // Position-based correction
+            // Use adaptive scaling: higher stiffness gets more aggressive scaling
+            // This prevents permanent deformation at low stiffness while staying stable at high stiffness
+            float scale = stiffness < 30f ? 0.005f : 0.01f;
+            float correctionFactor = (error / dist) * stiffness * scale;
+            Vector3 correction = delta * correctionFactor * 0.5f;
+            
             a.position += correction;
             b.position -= correction;
         }

@@ -74,8 +74,9 @@ public class ControllableSoftJello : MonoBehaviour
     /// <summary>
     /// Minimum spring stiffness coefficient (when alpha = 0.5, the baseline).
     /// Lower values = softer jello.
+    /// Must be high enough to prevent permanent deformation.
     /// </summary>
-    public float minStiffness = 10f;
+    public float minStiffness = 20f;
     
     /// <summary>
     /// Velocity damping coefficient (scaled by alpha).
