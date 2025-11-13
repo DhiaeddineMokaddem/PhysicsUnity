@@ -499,5 +499,40 @@ namespace PhysicsUnity.Core
             return min1 <= max2 && max1 >= min2;
         }
         #endregion
+
+        #region Sphere vs OBB
+        /// <summary>
+        /// Sphere vs OBB collision test (returns contact info). OBB defined by center, halfExtents, rotation.
+        /// </summary>
+        public static bool CheckSphereOBB(
+            Vector3 sphereCenter, float sphereRadius,
+            Vector3 obbCenter, Vector3 obbHalfExtents, Quaternion obbRotation,
+            out ContactInfo contact)
+        {
+            // Transform sphere center into OBB local space
+            Vector3 local = TransformUtils.InverseTransformPoint(sphereCenter, obbCenter, obbRotation, Vector3.one);
+            // Closest point in local box
+            Vector3 clamped = new Vector3(
+                Mathf.Clamp(local.x, -obbHalfExtents.x, obbHalfExtents.x),
+                Mathf.Clamp(local.y, -obbHalfExtents.y, obbHalfExtents.y),
+                Mathf.Clamp(local.z, -obbHalfExtents.z, obbHalfExtents.z)
+            );
+            // Back to world
+            Vector3 closestWorld = TransformUtils.TransformPoint(clamped, obbCenter, obbRotation, Vector3.one);
+            Vector3 delta = sphereCenter - closestWorld;
+            float distSq = delta.sqrMagnitude;
+            float rSq = sphereRadius * sphereRadius;
+            if (distSq <= rSq)
+            {
+                float dist = Mathf.Sqrt(Mathf.Max(distSq, PhysicsConstants.EPSILON));
+                Vector3 n = dist > PhysicsConstants.EPSILON ? delta / dist : Vector3.up;
+                float penetration = sphereRadius - dist;
+                contact = new ContactInfo(closestWorld, n, penetration);
+                return true;
+            }
+            contact = ContactInfo.NoCollision;
+            return false;
+        }
+        #endregion
     }
 }

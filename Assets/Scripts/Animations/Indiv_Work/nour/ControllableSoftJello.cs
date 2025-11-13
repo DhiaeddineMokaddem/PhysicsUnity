@@ -1,11 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Core; // Added to use MeshUtils and CollisionUtils
-// using PhysicsUnity.Indiv_Work.Aziz; // To access RigidBody3D and CollisionDetector
+using PhysicsUnity.Core;
+
 /// <summary>
 /// Super-stable soft-body "jello" cube using position-based spring constraints.
-/// Includes visible springs via Gizmos and full collision with floor and OBBs.
-/// Refactored to use MeshUtils for mesh creation and CollisionUtils for ground collision.
+/// Uses Core SoftBodyPoint and Spring from Physics namespace, CollisionUtils for OBB collision, MeshUtils for mesh creation.
 /// </summary>
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class ControllableSoftJello : MonoBehaviour
@@ -33,71 +32,13 @@ public class ControllableSoftJello : MonoBehaviour
     public bool drawDebug = true;
     public bool drawCollisionSpheres = true; // Added: visualize collision spheres
 
-    private MassPoint[,,] points;
-    private List<Spring> springs;
+    private PhysicsUnity.Core.Physics.SoftBodyPoint[,,] points;
+    private List<PhysicsUnity.Core.Physics.Spring> springs;
     private Mesh mesh;
     private Vector3[] baseVertices;
     private Vector3[] deformedVertices;
     private bool grounded = false;
     // Removed _obbsBuffer / _obbProviders – using SimpleOBB static registry
-
-    // ---------------- MASS POINT ----------------
-    public class MassPoint
-    {
-        public Vector3 position;
-        public Vector3 previousPosition;
-        public Vector3 force;
-        public float mass;
-
-        public MassPoint(Vector3 pos, float m)
-        {
-            position = pos;
-            previousPosition = pos;
-            force = Vector3.zero;
-            mass = m;
-        }
-
-        public void AddForce(Vector3 f) => force += f;
-
-        public void Integrate(float dt, float damping)
-        {
-            Vector3 velocity = position - previousPosition;
-            Vector3 newPos = position + velocity * (1f - damping * dt) + (force / mass) * dt * dt;
-            previousPosition = position;
-            position = newPos;
-            force = Vector3.zero;
-        }
-    }
-
-    // ---------------- SPRING (position constraint) ----------------
-    public class Spring
-    {
-        public MassPoint a, b;
-        public float restLength;
-        public float stiffness;
-
-        public Spring(MassPoint p1, MassPoint p2, float k)
-        {
-            a = p1;
-            b = p2;
-            restLength = MathUtils.Distance(p1.position, p2.position);
-            stiffness = k;
-        }
-
-        public void Apply()
-        {
-            Vector3 delta = b.position - a.position;
-            float dist = MathUtils.Magnitude(delta);
-            if (dist <= 1e-6f) return;
-
-            float diff = (dist - restLength) / dist;
-            // Stable position-based correction
-            Vector3 correction = delta * 0.5f * stiffness * 0.01f * diff;
-
-            a.position += correction;
-            b.position -= correction;
-        }
-    }
 
     // ---------------- UNITY LIFECYCLE ----------------
     void Start()
@@ -114,18 +55,13 @@ public class ControllableSoftJello : MonoBehaviour
 
     void InitSoftBody()
     {
-        points = new MassPoint[gridSize, gridSize, gridSize];
-        springs = new List<Spring>();
-
+        points = new PhysicsUnity.Core.Physics.SoftBodyPoint[gridSize, gridSize, gridSize];
+        springs = new List<PhysicsUnity.Core.Physics.Spring>();
         Vector3 start = transform.position - Vector3.one * (gridSize - 1) * cellSize * 0.5f;
-
-        // Create points
         for (int x = 0; x < gridSize; x++)
             for (int y = 0; y < gridSize; y++)
                 for (int z = 0; z < gridSize; z++)
-                    points[x, y, z] = new MassPoint(start + new Vector3(x, y, z) * cellSize, pointMass);
-
-        // Create springs between close neighbors only (structural + shear)
+                    points[x, y, z] = new PhysicsUnity.Core.Physics.SoftBodyPoint(start + new Vector3(x, y, z) * cellSize, pointMass);
         for (int x = 0; x < gridSize; x++)
             for (int y = 0; y < gridSize; y++)
                 for (int z = 0; z < gridSize; z++)
@@ -139,16 +75,15 @@ public class ControllableSoftJello : MonoBehaviour
                                 int nx = x + i, ny = y + j, nz = z + k;
                                 if (nx < 0 || ny < 0 || nz < 0 || nx >= gridSize || ny >= gridSize || nz >= gridSize)
                                     continue;
-
                                 var np = points[nx, ny, nz];
                                 float dist = MathUtils.Distance(p.position, np.position);
                                 if (dist <= cellSize * 1.5f && !SpringExists(p, np))
-                                    springs.Add(new Spring(p, np, stiffness));
+                                    springs.Add(new PhysicsUnity.Core.Physics.Spring(p, np, stiffness));
                             }
                 }
     }
 
-    bool SpringExists(MassPoint a, MassPoint b)
+    bool SpringExists(PhysicsUnity.Core.Physics.SoftBodyPoint a, PhysicsUnity.Core.Physics.SoftBodyPoint b)
     {
         foreach (var s in springs)
             if ((s.a == a && s.b == b) || (s.a == b && s.b == a))
@@ -206,6 +141,7 @@ public class ControllableSoftJello : MonoBehaviour
         // integrate
         foreach (var p in points)
             p.Integrate(dt, damping);
+        // Optionally via manager: PhysicsSimulationManager.IntegrateBodies(allBodies, dt, damping);
 
         // FIRST: collisions (pure math) BEFORE springs
         grounded = false;
@@ -216,44 +152,26 @@ public class ControllableSoftJello : MonoBehaviour
             for (int y = 0; y < gridSize; y++)
             for (int z = 0; z < gridSize; z++)
             {
-                MassPoint mp = points[x, y, z];
+                PhysicsUnity.Core.Physics.SoftBodyPoint mp = points[x, y, z];
                 for (int ci = 0; ci < colliders.Count; ci++)
                 {
                     var obb = colliders[ci];
                     if (obb == null) continue;
-
-                    // Sphere vs OBB: closest point on OBB to sphere center
-                    Vector3 local = obb.WorldToLocalPoint(mp.position);
-                    Vector3 clamped = new Vector3(
-                        Mathf.Clamp(local.x, -obb.halfExtents.x, obb.halfExtents.x),
-                        Mathf.Clamp(local.y, -obb.halfExtents.y, obb.halfExtents.y),
-                        Mathf.Clamp(local.z, -obb.halfExtents.z, obb.halfExtents.z)
-                    );
-                    Vector3 closestWorld = obb.LocalToWorldPoint(clamped);
-
-                    Vector3 d = mp.position - closestWorld;
-                    float distSq = MathUtils.SqrMagnitude(d);
-                    float rSq = pointRadius * pointRadius;
-
-                    if (distSq <= rSq)
+                    CollisionUtils.ContactInfo contact;
+                    if (CollisionUtils.CheckSphereOBB(mp.position, pointRadius, obb.transform.position, obb.halfExtents, obb.transform.rotation, out contact))
                     {
-                        float dist = Mathf.Sqrt(Mathf.Max(distSq, PhysicsConstants.EPSILON));
-                        Vector3 n = dist > 1e-5f ? d / dist : Vector3.up; // fallback normal if nearly coincident
-                        float pen = pointRadius - dist + 1e-4f; // small slop to prevent re-penetration
-
-                        mp.position += n * pen;
-
+                        mp.position += contact.normal * contact.penetration;
                         Vector3 vel = (mp.position - mp.previousPosition) / dt;
-                        float vn = MathUtils.Dot(vel, n);
+                        float vn = MathUtils.Dot(vel, contact.normal);
                         if (vn < 0f)
                         {
-                            vel -= vn * n * (1f + restitution);
-                            Vector3 vt = vel - MathUtils.Dot(vel, n) * n;
-                            vel = vt * friction + MathUtils.Dot(vel, n) * n;
+                            vel -= vn * contact.normal * (1f + restitution);
+                            Vector3 vt = vel - MathUtils.Dot(vel, contact.normal) * contact.normal;
+                            vel = vt * friction + MathUtils.Dot(vel, contact.normal) * contact.normal;
                         }
                         mp.previousPosition = mp.position - vel * dt;
-                        grounded = grounded || n.y > 0.3f; // only consider as grounded if normal points upward
-                        break; // first collider per point
+                        grounded = grounded || contact.normal.y > 0.3f;
+                        break;
                     }
                 }
             }
