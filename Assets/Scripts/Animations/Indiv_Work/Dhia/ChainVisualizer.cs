@@ -1,6 +1,5 @@
 //Handles rendering
 using UnityEngine;
-using UnityEngine;
 
 public class ChainVisualizer
 {
