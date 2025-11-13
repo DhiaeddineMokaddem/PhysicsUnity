@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// ===================================================================================
@@ -154,14 +154,14 @@ public class ControllableSoftJello : MonoBehaviour
     /// Each point has: position, previousPosition (for Verlet), force accumulator, mass.
     /// From Core/Physics/Spring.cs (SoftBodyPoint class).
     /// </summary>
-    private PhysicsUnity.Core.Physics.SoftBodyPoint[,,] points;
+    private PhysicsSimulation.Core.Physics.SoftBodyPoint[,,] points;
     
     /// <summary>
     /// List of springs connecting neighboring mass points.
     /// Each spring tries to maintain its rest length via position correction.
     /// From Core/Physics/Spring.cs (Spring class).
     /// </summary>
-    private List<PhysicsUnity.Core.Physics.Spring> springs;
+    private List<PhysicsSimulation.Core.Physics.Spring> springs;
     
     /// <summary>
     /// The visual mesh that gets deformed based on mass point positions.
@@ -240,8 +240,8 @@ public class ControllableSoftJello : MonoBehaviour
     void InitSoftBody()
     {
         // Allocate 3D array for mass points
-        points = new PhysicsUnity.Core.Physics.SoftBodyPoint[gridSize, gridSize, gridSize];
-        springs = new List<PhysicsUnity.Core.Physics.Spring>();
+        points = new PhysicsSimulation.Core.Physics.SoftBodyPoint[gridSize, gridSize, gridSize];
+        springs = new List<PhysicsSimulation.Core.Physics.Spring>();
         
         // Calculate starting position (bottom-left-back corner of the grid)
         // Subtract half the total extent on each axis to center the grid
@@ -254,7 +254,7 @@ public class ControllableSoftJello : MonoBehaviour
                 {
                     // Position = start corner + offset based on grid indices
                     Vector3 pos = start + new Vector3(x, y, z) * cellSize;
-                    points[x, y, z] = new PhysicsUnity.Core.Physics.SoftBodyPoint(pos, pointMass);
+                    points[x, y, z] = new PhysicsSimulation.Core.Physics.SoftBodyPoint(pos, pointMass);
                 }
         
         // PASS 2: Create springs between neighboring points
@@ -288,7 +288,7 @@ public class ControllableSoftJello : MonoBehaviour
                                 if (dist <= cellSize * 1.5f && !SpringExists(p, np))
                                 {
                                     // Create spring with current distance as rest length
-                                    springs.Add(new PhysicsUnity.Core.Physics.Spring(p, np, stiffness));
+                                    springs.Add(new PhysicsSimulation.Core.Physics.Spring(p, np, stiffness));
                                 }
                             }
                 }
@@ -298,7 +298,7 @@ public class ControllableSoftJello : MonoBehaviour
     /// Check if a spring already exists between two points (to avoid duplicates).
     /// Springs are bidirectional, so check both (a,b) and (b,a).
     /// </summary>
-    bool SpringExists(PhysicsUnity.Core.Physics.SoftBodyPoint a, PhysicsUnity.Core.Physics.SoftBodyPoint b)
+    bool SpringExists(PhysicsSimulation.Core.Physics.SoftBodyPoint a, PhysicsSimulation.Core.Physics.SoftBodyPoint b)
     {
         foreach (var s in springs)
             if ((s.a == a && s.b == b) || (s.a == b && s.b == a))
@@ -472,7 +472,7 @@ public class ControllableSoftJello : MonoBehaviour
             for (int y = 0; y < gridSize; y++)
             for (int z = 0; z < gridSize; z++)
             {
-                PhysicsUnity.Core.Physics.SoftBodyPoint mp = points[x, y, z];
+                PhysicsSimulation.Core.Physics.SoftBodyPoint mp = points[x, y, z];
                 
                 // Test against each collider (floor, walls, obstacles, etc.)
                 for (int ci = 0; ci < colliders.Count; ci++)

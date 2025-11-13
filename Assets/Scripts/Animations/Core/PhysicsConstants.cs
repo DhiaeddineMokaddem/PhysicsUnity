@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Centralized physics constants used throughout the project

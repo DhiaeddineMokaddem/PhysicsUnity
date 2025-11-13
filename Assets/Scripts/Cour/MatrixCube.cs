@@ -1,5 +1,5 @@
 using UnityEngine;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Matrix-based cube with free fall physics and rotation

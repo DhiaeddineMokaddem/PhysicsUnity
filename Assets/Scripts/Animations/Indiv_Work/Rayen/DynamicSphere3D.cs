@@ -1,6 +1,6 @@
 ﻿// filepath: c:\Users\Rayen\Documents\GitHub\PhysicsUnity\Assets\Scripts\Animations\Indiv_Work\aziz\DynamicSphere3D.cs
 using UnityEngine;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Dynamic custom-physics sphere updated by PhysicsManager substeps.

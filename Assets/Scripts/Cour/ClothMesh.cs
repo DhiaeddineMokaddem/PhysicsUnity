@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// A simple mass-spring cloth simulation that builds a rectangular grid of

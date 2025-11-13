@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Indiv_Work.Aziz;
 
 /// <summary>
 /// Génère une structure de cubes connectés - VERSION PURE MATH

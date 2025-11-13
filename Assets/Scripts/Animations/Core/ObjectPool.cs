@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Generic object pool for reducing allocations and improving performance

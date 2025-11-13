@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Core; // for PhysicsConstants / MathUtils if needed
+using PhysicsSimulation.Core; // for PhysicsConstants / MathUtils if needed
 
 /// <summary>
 /// Pure math oriented OBB collider with manual rigid transform (rotation + translation only).

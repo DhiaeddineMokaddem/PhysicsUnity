@@ -1,4 +1,4 @@
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Indiv_Work.Aziz;
 using UnityEngine;
 
 /// <summary>

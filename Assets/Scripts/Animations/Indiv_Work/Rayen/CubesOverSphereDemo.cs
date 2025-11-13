@@ -1,7 +1,7 @@
 ﻿// filepath: c:\Users\Rayen\Documents\GitHub\PhysicsUnity\Assets\Scripts\Animations\Indiv_Work\aziz\CubesOverSphereDemo.cs
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Indiv_Work.Aziz;
 
 /// <summary>
 /// Demo bootstrap: builds a static sphere and spawns a group of custom RigidBody3D cubes above it.
