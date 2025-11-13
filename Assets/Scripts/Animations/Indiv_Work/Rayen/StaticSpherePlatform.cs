@@ -1,11 +1,13 @@
 ﻿// filepath: c:\Users\Rayen\Documents\GitHub\PhysicsUnity\Assets\Scripts\Animations\Indiv_Work\aziz\StaticSpherePlatform.cs
 using UnityEngine;
 using PhysicsSimulation.Indiv_Work.Aziz;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Static sphere that interacts with custom RigidBody3D cubes using pure math (no Unity physics/Transform for simulation).
 /// It detects and resolves collisions against all RigidBody3D each FixedUpdate, but the sphere itself never moves.
 /// A child render sphere is created for visuals if none exists. Colliders are removed to avoid Unity physics.
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// </summary>
 public class StaticSpherePlatform : MonoBehaviour
 {
@@ -19,15 +21,22 @@ public class StaticSpherePlatform : MonoBehaviour
     [Header("Collision Settings")]
     public float localElasticity = 1.0f; // Multiplies PhysicsManagerRayen.globalElasticity
 
-    // Manual position storage for simulation (Transform only for rendering)
+    // Manual position storage for simulation (VisualRenderer only for rendering)
     [HideInInspector] public Vector3 position;
 
     private CollisionDetectorRayen _CollisionDetectorRayen;
     private PhysicsManagerRayen _PhysicsManagerRayen;
     private GameObject _renderSphere;
+    private VisualRenderer visualRenderer;
 
     void Awake()
     {
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
         // Initialize manual state and visuals
         position = center;
         EnsureRenderSphere();
@@ -110,9 +119,12 @@ public class StaticSpherePlatform : MonoBehaviour
 
     private void UpdateRenderTransform()
     {
-        // Render-only: place the sphere at the manual center
-        transform.position = position;
-        // Maintain scale in case radius changed
+        // Render-only: place the sphere at the manual center using VisualRenderer
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+        }
+        // Maintain scale in case radius changed (child sphere still uses local scale)
         if (_renderSphere != null)
         {
             _renderSphere.transform.localScale = Vector3.one * (radius * 2f);

@@ -4,6 +4,7 @@
     <option name="migrationStatus" value="IN_PROGRESS" />
     <option name="pendingSessionIds">
       <option value="3c18ead8-0154-4f26-8e13-13c952cf2b9f" />
+      <option value="40d4d97f-0d9a-47bc-8b51-04e578d7e25f" />
       <option value="704fdff2-2b47-4178-8c52-83229e77db39" />
       <option value="a3660e54-3f34-442b-aa4d-38ffb84afff1" />
     </option>
@@ -20,6 +21,17 @@
             </set>
           </value>
         </entry>
+        <entry key="40d4d97f-0d9a-47bc-8b51-04e578d7e25f">
+          <value>
+            <set>
+              <option value="bfdcee7d-f370-4bc2-8609-0e462db69b5d" />
+              <option value="f08a821f-ef1f-4c79-9bb2-911a355ffd1c" />
+              <option value="b69bfa5b-66d4-4ea0-94ce-bc486898c7c8" />
+              <option value="ede97bca-d7e2-469c-896b-f532e8151f62" />
+              <option value="36d9abd4-5eb5-462c-b5fb-279d0667612a" />
+            </set>
+          </value>
+        </entry>
         <entry key="704fdff2-2b47-4178-8c52-83229e77db39">
           <value>
             <set>
@@ -33,9 +45,9 @@
           <value>
             <set>
               <option value="194c5964-f289-4022-b100-c10ea239333f" />
-              <option value="d8c219ca-bff0-4b72-8ee1-bfbeb1aa8e7c" />
-              <option value="b1a01c8d-f669-47f7-a174-712392da485c" />
               <option value="7be206d4-fb5a-4c79-b9a3-c3d27e85858d" />
+              <option value="b1a01c8d-f669-47f7-a174-712392da485c" />
+              <option value="d8c219ca-bff0-4b72-8ee1-bfbeb1aa8e7c" />
               <option value="ecbd9b46-811b-4103-946e-feb1f263351b" />
             </set>
           </value>
@@ -44,13 +56,32 @@
     </option>
     <pendingWorkingSetItems>
       <entry key="3c18ead8-0154-4f26-8e13-13c952cf2b9f" />
-      <entry key="704fdff2-2b47-4178-8c52-83229e77db39" />
-      <entry key="a3660e54-3f34-442b-aa4d-38ffb84afff1">
+      <entry key="40d4d97f-0d9a-47bc-8b51-04e578d7e25f">
         <set>
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/yahya3/ImpactSphereYahya.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/yahya3/SimulationControllerYahya.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/VisualRenderer.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/yahya/RigidBody3DYahya.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/yahya/ImpactSphereYahya.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/RigidBody3D.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/ImpactSphere.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/ImpactSphereRayen.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/DynamicSphere3D.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/StaticSpherePlatform.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/QuaternionRotation.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/TrailFollow.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/VisualRenderer.cs.meta" />
+          <option value="file://$PROJECT_DIR$/TRANSFORM_REFACTORING_SUMMARY.md" />
+          <option value="file://$PROJECT_DIR$/REFACTORING_COMPLETE.md" />
+          <option value="file://$PROJECT_DIR$/FIXES_COMPLETE.md" />
+          <option value="file://$PROJECT_DIR$/FINAL_STATUS.md" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMatrix.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMatrix.cs.meta" />
+          <option value="file://$PROJECT_DIR$/MANUAL_MESH_TRANSFORMATION.md" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMeshTransformTest.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMeshTransformTest.cs.meta" />
         </set>
       </entry>
+      <entry key="704fdff2-2b47-4178-8c52-83229e77db39" />
+      <entry key="a3660e54-3f34-442b-aa4d-38ffb84afff1" />
     </pendingWorkingSetItems>
   </component>
 </project>

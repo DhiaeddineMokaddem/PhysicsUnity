@@ -44,6 +44,7 @@ namespace PhysicsSimulation.Indiv_Work.Aziz
         
         // Track if this is the first initialization
         private bool isInitialized = false;
+        private VisualRenderer visualRenderer;
         #endregion
 
         #region Initialization
@@ -53,12 +54,18 @@ namespace PhysicsSimulation.Indiv_Work.Aziz
         /// </summary>
         void Awake()
         {
-            // Only initialize from Transform if position hasn't been set manually
+            visualRenderer = GetComponent<VisualRenderer>();
+            if (visualRenderer == null)
+            {
+                visualRenderer = gameObject.AddComponent<VisualRenderer>();
+            }
+
+            // Only initialize from VisualRenderer if position hasn't been set manually
             if (!isInitialized)
             {
-                position = transform.position;
-                rotation = transform.rotation;
-                scale = transform.localScale;
+                position = visualRenderer.GetPosition();
+                rotation = visualRenderer.GetRotation();
+                scale = visualRenderer.GetScale();
                 isInitialized = true;
             }
             
@@ -81,10 +88,11 @@ namespace PhysicsSimulation.Indiv_Work.Aziz
             scale = scl;
             isInitialized = true;
             
-            // Update transform to match
-            transform.position = pos;
-            transform.rotation = rot;
-            transform.localScale = scl;
+            // Update visual renderer to match
+            if (visualRenderer != null)
+            {
+                visualRenderer.UpdateTransform(pos, rot, scl);
+            }
         }
         #endregion
 
@@ -199,9 +207,10 @@ namespace PhysicsSimulation.Indiv_Work.Aziz
         // PURE MATH: Mise à jour du Transform Unity pour l'affichage
         public void UpdateVisualTransform()
         {
-            transform.position = position;
-            transform.rotation = rotation;
-            transform.localScale = scale;
+            if (visualRenderer != null)
+            {
+                visualRenderer.UpdateTransform(position, rotation, scale);
+            }
         }
         #endregion
 

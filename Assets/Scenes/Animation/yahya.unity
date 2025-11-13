@@ -269,18 +269,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   width: 5
-  height: 4
+  height: 5
   depth: 5
-  spacing: 1
+  spacing: 1.1
   cubeSize: 1
-  cubeMass: 1.2
+  cubeMass: 0.5
   cubeMaterial: {fileID: 0}
   constraintStiffness: 1200
   constraintDamping: 60
   constraintBreakForce: 150
   constraintMaxDistance: 1.5
   buildOnStart: 1
-  connectDiagonals: 1
+  connectDiagonals: 0
 --- !u!4 &277565606
 Transform:
   m_ObjectHideFlags: 0
@@ -446,6 +446,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 286e07b4bb44d7b49903ca2d27f7ce10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  groundSize: {x: 20, y: 0.2, z: 20}
+  groundColor:
+    r: 0.3
+    g: 0.3
+    b: 0.3
+    a: 1
+  beamSegmentSize: {x: 3, y: 0.3, z: 0.3}
+  beamHeight: 1.5
+  segment1Color:
+    r: 1
+    g: 0.9
+    b: 0.2
+    a: 1
+  segment2Color:
+    r: 1
+    g: 0.2
+    b: 0.2
+    a: 1
+  postRadius: 0.15
+  postHeight: 2.5
+  postColor:
+    r: 0.4
+    g: 0.25
+    b: 0.15
+    a: 1
+  cubeSize: {x: 0.5, y: 0.5, z: 0.5}
+  cubeStartPosition: {x: -5, y: 0.3, z: 0}
+  cubeColor:
+    r: 0.2
+    g: 0.8
+    b: 0.2
+    a: 1
+  impactVelocity: 25
+  gravity: -9.81
+  timeStep: 0.015
+  elasticity: 0.6
+  beamMass: 2
+  cubeMass: 3
+  jointStiffness: 3000
+  jointDamping: 150
+  jointBreakForce: 300
+  ground: {fileID: 0}
+  leftPost: {fileID: 0}
+  rightPost: {fileID: 0}
+  segment1: {fileID: 0}
+  segment2: {fileID: 0}
+  impactCube: {fileID: 0}
+  segment1Body: {fileID: 0}
+  segment2Body: {fileID: 0}
+  cubeBody: {fileID: 0}
+  allBodies: []
+  simulationStarted: 0
+  accumulator: 0
 --- !u!4 &588941371
 Transform:
   m_ObjectHideFlags: 0
@@ -524,7 +577,6 @@ GameObject:
   - component: {fileID: 1127010968}
   - component: {fileID: 1127010967}
   - component: {fileID: 1127010966}
-  - component: {fileID: 1127010969}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -599,57 +651,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1127010965}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0937776, y: -0.2003341, z: -0.0192678, w: 0.9750389}
-  m_LocalPosition: {x: 4.68, y: 5.5, z: -12.06}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 10.088, y: -23.608, z: -4.377}
---- !u!114 &1127010969
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1127010965}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
-  m_Antialiasing: 0
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_AllowXRRendering: 1
-  m_AllowHDROutput: 1
-  m_UseScreenCoordOverride: 0
-  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_Version: 2
-  m_TaaSettings:
-    m_Quality: 3
-    m_FrameInfluence: 0.1
-    m_JitterScale: 1
-    m_MipBias: 0
-    m_VarianceClampScale: 0.9
-    m_ContrastAdaptiveSharpening: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1375596719
 GameObject:
   m_ObjectHideFlags: 0
@@ -789,6 +797,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ff17acbd444d84e8b114056347e918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  beamSimulation: {fileID: 0}
+  showDebugUI: 1
+  startKey: 32
+  resetKey: 114
+  increaseAlphaKey: 43
+  decreaseAlphaKey: 45
+  windowRect:
+    x: 10
+    y: 10
+    width: 320
+    height: 400
+  alphaSliderValue: 0.5
+  wasAlphaChanged: 0
 --- !u!114 &1676468601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -801,6 +822,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 400c7d30131f20540bd4848a87bc031d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  beamLength: 4
+  beamWidth: 0.2
+  beamHeight: 0.2
+  segmentMass: 1
+  beamHeightFromGround: 2
+  postHeight: 3
+  postRadius: 0.15
+  alpha: 0.5
+  baseStiffness: 500
+  baseDamping: 20
+  breakForce: 100
+  projectileSize: 0.3
+  projectileMass: 2
+  projectileSpeed: 15
+  projectileStartOffset: {x: 0, y: 3, z: -5}
+  gravity: {x: 0, y: -9.81, z: 0}
+  substeps: 2
+  groundHeight: 0
+  groundRestitution: 0.3
+  groundFriction: 0.5
+  leftPost: {fileID: 0}
+  rightPost: {fileID: 0}
+  leftSegment: {fileID: 0}
+  rightSegment: {fileID: 0}
+  centerConstraint: {fileID: 0}
+  projectile: {fileID: 0}
+  ground: {fileID: 0}
+  groundMesh: {fileID: 0}
+  isSimulationRunning: 0
+  hasFractured: 0
+  postMaterial: {fileID: 0}
+  beamMaterial: {fileID: 0}
+  projectileMaterial: {fileID: 0}
+  groundMaterial: {fileID: 0}
 --- !u!4 &1676468602
 Transform:
   m_ObjectHideFlags: 0

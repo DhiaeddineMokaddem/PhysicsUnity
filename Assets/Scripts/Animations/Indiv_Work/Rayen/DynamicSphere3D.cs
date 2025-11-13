@@ -4,7 +4,7 @@ using PhysicsSimulation.Core;
 
 /// <summary>
 /// Dynamic custom-physics sphere updated by PhysicsManager substeps.
-/// Stores manual position/velocity and uses Transform only for rendering.
+/// Stores manual position/velocity and uses VisualRenderer only for rendering.
 /// </summary>
 public class DynamicSphere3D : MonoBehaviour
 {
@@ -27,9 +27,18 @@ public class DynamicSphere3D : MonoBehaviour
     public Material sphereMaterial;
     public Color color = Color.red;
 
+    private VisualRenderer visualRenderer;
+
     void Awake()
     {
-        position = transform.position;
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
+        position = visualRenderer.GetPosition();
+        
         // Ensure we only use renderers visually
         var col = GetComponent<Collider>();
         if (col != null) DestroyImmediate(col);
@@ -39,7 +48,8 @@ public class DynamicSphere3D : MonoBehaviour
             if (sphereMaterial != null) mr.material = sphereMaterial;
             else mr.material.color = color;
         }
-        transform.localScale = Vector3.one * (radius * 2f);
+        
+        visualRenderer.UpdateScale(Vector3.one * (radius * 2f));
     }
 
     public void IntegratePhysics(float deltaTime)
@@ -73,8 +83,11 @@ public class DynamicSphere3D : MonoBehaviour
 
     public void UpdateVisualTransform()
     {
-        transform.position = position;
-        transform.localScale = Vector3.one * (radius * 2f);
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+            visualRenderer.UpdateScale(Vector3.one * (radius * 2f));
+        }
     }
 }
 
