@@ -590,7 +590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f97d68ede15f43e39412368c6b0e19a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jello: {fileID: 0}
+  jello: {fileID: 1914927886}
   offset: {x: 0, y: 2, z: -5}
   smoothSpeed: 0.125
   lookAtTarget: 1
