@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Utility class for procedural mesh generation and manipulation

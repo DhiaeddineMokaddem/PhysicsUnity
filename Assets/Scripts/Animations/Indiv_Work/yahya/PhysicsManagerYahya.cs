@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Gestionnaire principal de la simulation physique - VERSION PURE MATH

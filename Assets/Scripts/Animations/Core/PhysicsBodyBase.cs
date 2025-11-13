@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Base class for all physics bodies in the system

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Utility class for rotation implementations - Euler and Quaternion methods

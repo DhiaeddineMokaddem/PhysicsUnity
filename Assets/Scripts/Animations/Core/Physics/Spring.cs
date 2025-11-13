@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PhysicsUnity.Core.Physics
+namespace PhysicsSimulation.Core.Physics
 {
     /// <summary>
     /// Lightweight soft-body point (Verlet-style integrator, pure data).

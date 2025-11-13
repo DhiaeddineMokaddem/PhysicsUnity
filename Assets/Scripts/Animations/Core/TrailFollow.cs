@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Helper class for trail effects and motion tracking

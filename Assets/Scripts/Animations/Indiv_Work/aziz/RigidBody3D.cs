@@ -1,7 +1,7 @@
+using PhysicsSimulation.Core;
 using UnityEngine;
-using PhysicsUnity.Core;
 
-namespace PhysicsUnity.Indiv_Work.Aziz
+namespace PhysicsSimulation.Indiv_Work.Aziz
 {
     /// <summary>
     /// Représente un corps rigide avec toutes ses propriétés physiques - VERSION PURE MATH

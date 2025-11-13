@@ -20,6 +20,7 @@ public class CustomChainPhysics : MonoBehaviour
     [SerializeField] private float damping = 0.98f;
     [SerializeField] private int constraintIterations = 5;
     [SerializeField] private float stiffness = 0.8f;
+    [SerializeField][Range(0f, 2f)] private float breakReactionAlpha = 1f; // Exaggeration of break reaction
 
     // Custom data structures
     private Vector3[] positions;
@@ -40,6 +41,11 @@ public class CustomChainPhysics : MonoBehaviour
     private bool startAnchorActive = true;
     private bool endAnchorActive = true;
     private float currentTension = 0f;
+
+    // Break reaction data
+    private bool justBroke = false;
+    private Vector3 breakImpulseDirection = Vector3.zero;
+    private float breakTime = 0f;
 
     void Start()
     {
@@ -169,12 +175,30 @@ public class CustomChainPhysics : MonoBehaviour
         {
             startAnchorActive = false;
             Debug.Log("Start anchor broke! Tension: " + currentTension);
+
+            // Calculate impulse direction and magnitude
+            if (linkCount > 1)
+            {
+                breakImpulseDirection = (positions[1] - positions[0]).normalized;
+            }
         }
         else
         {
             endAnchorActive = false;
             Debug.Log("End anchor broke! Tension: " + currentTension);
+
+            // Calculate impulse direction and magnitude
+            if (linkCount > 1)
+            {
+                breakImpulseDirection = (positions[linkCount - 2] - positions[linkCount - 1]).normalized;
+            }
         }
+
+        justBroke = true;
+        breakTime = Time.time;
+
+        // Apply initial break impulse to chain based on alpha
+        ApplyBreakImpulse(breakStart);
     }
 
     void VerletIntegration(float dt)
@@ -202,11 +226,24 @@ public class CustomChainPhysics : MonoBehaviour
                 acceleration += anchorVel / dt;
             }
 
+            // Apply extra impulse right after break for exaggerated reaction
+            if (justBroke && Time.time - breakTime < 0.5f)
+            {
+                float breakForce = currentTension * breakReactionAlpha * 10f;
+                acceleration += breakImpulseDirection * breakForce;
+            }
+
             positions[i] = positions[i] + (positions[i] - prevPositions[i]) * damping + acceleration * dt * dt;
             prevPositions[i] = temp;
 
             // Update velocity for reference
             velocities[i] = (positions[i] - prevPositions[i]) / dt;
+        }
+
+        // Reset break flag after a short time
+        if (justBroke && Time.time - breakTime > 0.5f)
+        {
+            justBroke = false;
         }
     }
 
@@ -298,6 +335,49 @@ public class CustomChainPhysics : MonoBehaviour
                         rotations[i] = baseRotation * Quaternion.Euler(0, 0, 90);
                     }
                 }
+            }
+        }
+    }
+
+    void ApplyBreakImpulse(bool startBroke)
+    {
+        // Apply impulse to links near the break point
+        float impulseStrength = currentTension * breakReactionAlpha * 2f;
+
+        if (startBroke)
+        {
+            // Apply impulse to first few links
+            for (int i = 0; i < Mathf.Min(5, linkCount); i++)
+            {
+                float falloff = 1f - (i / 5f);
+                Vector3 impulse = breakImpulseDirection * impulseStrength * falloff;
+
+                // Add some randomness for more chaotic effect
+                impulse += new Vector3(
+                    Random.Range(-1f, 1f),
+                    Random.Range(-0.5f, 1f),
+                    Random.Range(-1f, 1f)
+                ) * breakReactionAlpha;
+
+                prevPositions[i] = positions[i] - impulse * Time.deltaTime;
+            }
+        }
+        else
+        {
+            // Apply impulse to last few links
+            for (int i = Mathf.Max(0, linkCount - 5); i < linkCount; i++)
+            {
+                float falloff = 1f - ((linkCount - 1 - i) / 5f);
+                Vector3 impulse = breakImpulseDirection * impulseStrength * falloff;
+
+                // Add some randomness for more chaotic effect
+                impulse += new Vector3(
+                    Random.Range(-1f, 1f),
+                    Random.Range(-0.5f, 1f),
+                    Random.Range(-1f, 1f)
+                ) * breakReactionAlpha;
+
+                prevPositions[i] = positions[i] - impulse * Time.deltaTime;
             }
         }
     }

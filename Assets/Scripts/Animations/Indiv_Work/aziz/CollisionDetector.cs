@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Core;
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Core;
+using PhysicsSimulation.Indiv_Work.Aziz;
 
 /// <summary>
 /// Informations sur une collision

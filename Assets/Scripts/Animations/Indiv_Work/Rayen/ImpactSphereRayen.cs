@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Indiv_Work.Aziz;
 
 /// <summary>
 /// Sphère qui impacte la structure de cubes - VERSION PURE MATH

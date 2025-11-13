@@ -1,9 +1,9 @@
 ﻿
 using System.Collections.Generic;
+using PhysicsSimulation.Indiv_Work.Aziz;
 using UnityEngine;
-using PhysicsUnity.Indiv_Work.Aziz;
 
-namespace PhysicsUnity.Core
+namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Lightweight shared registry for collision participants and a single CollisionDetector.

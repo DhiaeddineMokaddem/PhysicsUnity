@@ -1,5 +1,5 @@
 using UnityEngine;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Représente un corps rigide avec toutes ses propriétés physiques - VERSION PURE MATH

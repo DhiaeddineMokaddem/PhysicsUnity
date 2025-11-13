@@ -1,6 +1,6 @@
 ﻿// filepath: c:\Users\Rayen\Documents\GitHub\PhysicsUnity\Assets\Scripts\Animations\Indiv_Work\aziz\StaticSpherePlatform.cs
 using UnityEngine;
-using PhysicsUnity.Indiv_Work.Aziz;
+using PhysicsSimulation.Indiv_Work.Aziz;
 
 /// <summary>
 /// Static sphere that interacts with custom RigidBody3D cubes using pure math (no Unity physics/Transform for simulation).

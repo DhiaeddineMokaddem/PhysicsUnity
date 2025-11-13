@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using PhysicsUnity.Core; // for MathUtils
+using PhysicsSimulation.Core; // for MathUtils
 
 [DisallowMultipleComponent]
 public class JelloKeyboardController : MonoBehaviour

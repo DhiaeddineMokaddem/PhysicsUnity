@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using PhysicsUnity.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Classe représentant une sphère avec toutes ses propriétés physiques
