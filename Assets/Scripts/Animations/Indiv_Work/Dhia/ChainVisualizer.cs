@@ -116,7 +116,7 @@ public class ChainVisualizer
         }
 
         // Draw start anchor
-        if (startAnchor.transform != null)
+        if (startAnchor != null)
         {
             Gizmos.color = startAnchor.isActive ? Color.green : Color.gray;
             Gizmos.DrawWireSphere(startAnchor.position, linkRadius * 1.5f);
@@ -124,7 +124,7 @@ public class ChainVisualizer
         }
 
         // Draw end anchor
-        if (endAnchor.transform != null)
+        if (endAnchor != null)
         {
             Gizmos.color = endAnchor.isActive ? Color.green : Color.gray;
             Gizmos.DrawWireSphere(endAnchor.position, linkRadius * 1.5f);
