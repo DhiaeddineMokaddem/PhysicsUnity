@@ -1,6 +1,6 @@
-//Data structure for a single chain link
 using UnityEngine;
 
+//Data structure for a single chain link
 public class ChainLink
 {
     public Vector3 position;

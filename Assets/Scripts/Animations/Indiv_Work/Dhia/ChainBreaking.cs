@@ -1,6 +1,6 @@
-//Manages breaking logic
 using UnityEngine;
 
+//Manages breaking logic
 public class ChainBreaking
 {
     private float maxStretchDistance;

@@ -1,7 +1,7 @@
-//Handles rendering
 using UnityEngine;
 using PhysicsSimulation.Core; // for ManualMatrix
 
+//Handles rendering
 public class ChainVisualizer
 {
     private float linkRadius;

@@ -1,6 +1,6 @@
-//Handles physics simulation
 using UnityEngine;
 
+//Handles physics simulation
 public class ChainPhysics
 {
     private float gravity;

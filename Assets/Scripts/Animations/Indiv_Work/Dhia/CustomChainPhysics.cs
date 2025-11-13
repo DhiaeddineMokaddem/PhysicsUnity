@@ -1,6 +1,6 @@
-// CustomChainPhysics.cs - Main controller
 using UnityEngine;
 
+//Main controller
 public class CustomChainPhysics : MonoBehaviour
 {
     [Header("Chain Settings")]

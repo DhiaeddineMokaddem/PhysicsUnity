@@ -1,6 +1,6 @@
-//Handles chain breaking physics
 using UnityEngine;
 
+//Handles chain breaking physics
 public class BreakReaction
 {
     public bool justBroke;

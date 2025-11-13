@@ -1,5 +1,6 @@
-//Manages anchor points
 using UnityEngine;
+
+//Manages anchor points
 public class ChainAnchor
 {
     public CustomChainPhysics customChainPhysics;
