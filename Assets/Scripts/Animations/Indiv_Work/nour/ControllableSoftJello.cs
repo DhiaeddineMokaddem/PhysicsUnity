@@ -37,6 +37,17 @@ public class ControllableSoftJello : MonoBehaviour
     [Header("Soft Body Settings")]
     
     /// <summary>
+    /// Alpha control parameter (0-1).
+    /// Controls the overall stiffness and bounciness of the jello:
+    /// - Lower alpha (closer to 0) = SOFT and BOUNCY
+    /// - Higher alpha (closer to 1) = STIFF and NOT BOUNCY (hard cube-like)
+    /// Note: Values below 0.5 may cause collision instability.
+    /// </summary>
+    [Range(0f, 1f)]
+    [Tooltip("0 = soft & bouncy, 1 = stiff & not bouncy (recommend min 0.5)")]
+    public float alpha = 0.5f;
+    
+    /// <summary>
     /// Number of mass points per axis (e.g., 4 = 4x4x4 = 64 points total).
     /// Higher = more detail but slower performance.
     /// </summary>
@@ -55,17 +66,26 @@ public class ControllableSoftJello : MonoBehaviour
     public float pointMass = 0.1f;
     
     /// <summary>
-    /// Spring stiffness coefficient (0-100+).
+    /// Maximum spring stiffness coefficient (when alpha = 1).
     /// Higher = stiffer jello (more shape retention), lower = squishier.
-    /// Too high can cause instability/jitter.
     /// </summary>
-    public float stiffness = 25f;
+    public float maxStiffness = 50f;
     
     /// <summary>
-    /// Velocity damping coefficient (0-1).
-    /// Simulates internal friction/energy loss. Higher = more damping (less bouncy).
+    /// Minimum spring stiffness coefficient (when alpha = 0.5, the baseline).
+    /// Lower values = softer jello.
     /// </summary>
-    public float damping = 2.5f;
+    public float minStiffness = 10f;
+    
+    /// <summary>
+    /// Velocity damping coefficient (scaled by alpha).
+    /// Higher damping removes more energy each step.
+    /// </summary>
+    [Header("Damping")]
+    [Tooltip("Damping at alpha=0.5 (baseline)")]
+    public float minDamping = 1.5f;
+    [Tooltip("Damping at alpha=1 (stiff & not bouncy)")]
+    public float maxDamping = 4.0f;
     
     /// <summary>
     /// Gravity acceleration (m/s²). Negative pulls down.
@@ -74,10 +94,17 @@ public class ControllableSoftJello : MonoBehaviour
     public float gravity = -9.81f;
     
     /// <summary>
-    /// Bounciness on collision (0-1).
+    /// Maximum bounciness on collision (when alpha = 0).
+    /// The actual restitution is calculated as: maxRestitution * (1 - alpha)
     /// 0 = no bounce (perfectly inelastic), 1 = perfect bounce (perfectly elastic).
     /// </summary>
-    public float restitution = 0.3f;
+    public float maxRestitution = 0.3f;
+    
+    /// <summary>
+    /// Minimum bounciness on collision (when alpha = 1).
+    /// Ensures some minimum bounce even at maximum alpha.
+    /// </summary>
+    public float minRestitution = 0.05f;
     
     /// <summary>
     /// Surface friction on collision (0-1).
@@ -185,6 +212,56 @@ public class ControllableSoftJello : MonoBehaviour
     /// </summary>
     private bool grounded = false;
 
+    // Backward-compatible dynamic properties (previously public fields)
+    // External scripts that used jello.stiffness or jello.restitution will still work.
+    public float stiffness { get { return GetCurrentStiffness(); } }
+    public float restitution { get { return GetCurrentRestitution(); } }
+
+    // ===================================================================================
+    // ALPHA-BASED PROPERTY CALCULATIONS
+    // ===================================================================================
+    
+    /// <summary>
+    /// Calculate current stiffness based on alpha value.
+    /// Lower alpha = lower stiffness (softer)
+    /// Higher alpha = higher stiffness (stiffer)
+    /// </summary>
+    private float GetCurrentStiffness()
+    {
+        // Low alpha -> min stiffness (soft); High alpha -> max stiffness (stiff)
+        return Mathf.Lerp(minStiffness, maxStiffness, alpha);
+    }
+    
+    /// <summary>
+    /// Calculate current restitution (bounciness) based on alpha value.
+    /// Lower alpha = higher restitution (more bouncy)
+    /// Higher alpha = lower restitution (less bouncy, more damped)
+    /// </summary>
+    private float GetCurrentRestitution()
+    {
+        return Mathf.Lerp(maxRestitution, minRestitution, alpha);
+    }
+
+    /// <summary>
+    /// Optional: scale collision sphere radius slightly when very soft to stabilize
+    /// contact handling (earlier contact prevents deep penetration).
+    /// </summary>
+    private float GetCurrentPointRadius()
+    {
+        // Up to +15% radius when alpha=0 (soft), no change when alpha=1 (stiff)
+        return pointRadius * Mathf.Lerp(1.15f, 1f, alpha);
+    }
+
+    /// <summary>
+    /// Calculate current damping based on alpha value.
+    /// Lower alpha = lower damping (more bouncy)
+    /// Higher alpha = higher damping (less bouncy, more energy loss)
+    /// </summary>
+    private float GetCurrentDamping()
+    {
+        return Mathf.Lerp(minDamping, maxDamping, alpha);
+    }
+
     // ===================================================================================
     // INITIALIZATION (CALLED ONCE ON START)
     // ===================================================================================
@@ -288,7 +365,8 @@ public class ControllableSoftJello : MonoBehaviour
                                 if (dist <= cellSize * 1.5f && !SpringExists(p, np))
                                 {
                                     // Create spring with current distance as rest length
-                                    springs.Add(new PhysicsSimulation.Core.Physics.Spring(p, np, stiffness));
+                                    // Use dynamic stiffness based on alpha
+                                    springs.Add(new PhysicsSimulation.Core.Physics.Spring(p, np, GetCurrentStiffness()));
                                 }
                             }
                 }
@@ -410,6 +488,18 @@ public class ControllableSoftJello : MonoBehaviour
         float dt = Mathf.Min(Time.fixedDeltaTime, 0.02f);
 
         // ===============================================================================
+        // STEP 0: UPDATE SPRING PROPERTIES BASED ON ALPHA
+        // ===============================================================================
+        
+        // Update stiffness of all springs to reflect current alpha value
+        // This allows real-time control of jello softness
+        float currentStiffness = GetCurrentStiffness();
+        foreach (var spring in springs)
+        {
+            spring.stiffness = currentStiffness;
+        }
+
+        // ===============================================================================
         // STEP 1: ACCUMULATE FORCES
         // ===============================================================================
         
@@ -451,8 +541,9 @@ public class ControllableSoftJello : MonoBehaviour
         //   previousPosition = position
         //   position = newPos
         //   force = 0
+        float currentDamping = GetCurrentDamping();
         foreach (var p in points)
-            p.Integrate(dt, damping);
+            p.Integrate(dt, currentDamping);
 
         // ===============================================================================
         // STEP 3: COLLISION DETECTION AND RESPONSE (BEFORE SPRINGS!)
@@ -473,6 +564,7 @@ public class ControllableSoftJello : MonoBehaviour
             for (int z = 0; z < gridSize; z++)
             {
                 PhysicsSimulation.Core.Physics.SoftBodyPoint mp = points[x, y, z];
+                float pr = GetCurrentPointRadius();
                 
                 // Test against each collider (floor, walls, obstacles, etc.)
                 for (int ci = 0; ci < colliders.Count; ci++)
@@ -494,7 +586,7 @@ public class ControllableSoftJello : MonoBehaviour
                     CollisionUtils.ContactInfo contact;
                     
                     if (CollisionUtils.CheckSphereOBB(
-                        mp.position, pointRadius,
+                        mp.position, pr,
                         obb.transform.position, obb.halfExtents, obb.transform.rotation,
                         out contact))
                     {
@@ -504,6 +596,10 @@ public class ControllableSoftJello : MonoBehaviour
                         // 1. POSITION CORRECTION: Push point out of collision
                         //    Move along contact normal by penetration distance
                         mp.position += contact.normal * contact.penetration;
+                        
+                        // Separation bias (skin) to reduce immediate re-penetration when soft
+                        float skin = Mathf.Lerp(0.005f, 0.001f, alpha);
+                        mp.position += contact.normal * skin;
                         
                         // 2. VELOCITY REFLECTION: Bounce off surface
                         //    Calculate current velocity from Verlet state
@@ -517,12 +613,19 @@ public class ControllableSoftJello : MonoBehaviour
                         {
                             // Remove normal component and apply restitution (bounciness)
                             // vel = vel - vn * normal * (1 + restitution)
-                            vel -= vn * contact.normal * (1f + restitution);
+                            // Use dynamic restitution based on alpha
+                            float currentRestitution = GetCurrentRestitution();
+                            vel -= vn * contact.normal * (1f + currentRestitution);
                             
                             // Apply friction to tangential component
                             // Separate velocity into tangent and normal components
                             Vector3 vt = vel - MathUtils.Dot(vel, contact.normal) * contact.normal;
                             vel = vt * friction + MathUtils.Dot(vel, contact.normal) * contact.normal;
+                            
+                            // Clamp any residual inward normal velocity to zero to avoid tunneling
+                            float vn2 = MathUtils.Dot(vel, contact.normal);
+                            if (vn2 < 0f)
+                                vel -= vn2 * contact.normal;
                         }
                         
                         // 3. UPDATE VERLET STATE: Set previousPosition to reflect new velocity
@@ -545,19 +648,10 @@ public class ControllableSoftJello : MonoBehaviour
         // ===============================================================================
         
         // Run multiple solver iterations for accuracy
-        // More iterations = springs maintain length better, but slower
-        for (int i = 0; i < solverIterations; i++)
+        // Keep baseline iterations at alpha=0; slightly fewer when very stiff to save work
+        int iterations = Mathf.Max(1, Mathf.RoundToInt(Mathf.Lerp(solverIterations, Mathf.Ceil(solverIterations * 0.75f), alpha)));
+        for (int i = 0; i < iterations; i++)
         {
-            // Each spring tries to restore its rest length
-            // Spring.Apply() does position-based correction:
-            //   delta = b.position - a.position
-            //   error = (currentLength - restLength) / currentLength
-            //   correction = delta * 0.5 * stiffness * 0.01 * error
-            //   a.position += correction
-            //   b.position -= correction
-            // 
-            // The 0.5 factor means each point moves half the correction distance
-            // The 0.01 factor scales stiffness to a reasonable range
             foreach (var s in springs)
                 s.Apply();
         }
@@ -715,8 +809,9 @@ public class ControllableSoftJello : MonoBehaviour
         if (drawCollisionSpheres)
         {
             Gizmos.color = Color.red;
+            float pr = Application.isPlaying ? GetCurrentPointRadius() : pointRadius;
             foreach (var p in points)
-                Gizmos.DrawWireSphere(p.position, pointRadius);
+                Gizmos.DrawWireSphere(p.position, pr);
         }
     }
 }
@@ -735,4 +830,3 @@ public class ControllableSoftJello : MonoBehaviour
 // 6. No Unity physics (Rigidbody/Collider) - all pure math for full control
 //
 // ===================================================================================
-
