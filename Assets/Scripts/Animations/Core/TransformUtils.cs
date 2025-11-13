@@ -1,109 +1,141 @@
-﻿using UnityEngine;
+﻿// Import Unity's Vector3, Quaternion, and Matrix4x4 types
+using UnityEngine;
 
+// Namespace for core physics simulation utilities
 namespace PhysicsSimulation.Core
 {
     /// <summary>
     /// Utility class for transformation operations
     /// Provides pure math implementations for position, rotation, and scale operations
+    /// NO Unity Transform used - all calculations done manually for physics education
     /// </summary>
     public static class TransformUtils
     {
         #region Coordinate Transformations
         /// <summary>
         /// Transforms a point from local space to world space
+        /// Formula: worldPoint = position + rotation * (scale * localPoint)
+        /// Order: Scale → Rotate → Translate (SRT)
         /// </summary>
         public static Vector3 TransformPoint(Vector3 localPoint, Vector3 position, Quaternion rotation, Vector3 scale)
         {
-            // Scale, then rotate, then translate
+            // Step 1: Scale the local point (component-wise multiplication)
             Vector3 scaled = Vector3.Scale(localPoint, scale);
+            // Step 2: Rotate the scaled point using quaternion multiplication
             Vector3 rotated = rotation * scaled;
+            // Step 3: Translate by adding the world position
             return position + rotated;
         }
 
         /// <summary>
         /// Transforms a point from local space to world space using a matrix
+        /// Alternative version using matrix multiplication instead of quaternion
         /// </summary>
         public static Vector3 TransformPointMatrix(Vector3 localPoint, Vector3 position, Matrix4x4 rotationMatrix, Vector3 scale)
         {
+            // Step 1: Scale the local point
             Vector3 scaled = Vector3.Scale(localPoint, scale);
+            // Step 2: Rotate using matrix-vector multiplication
             Vector3 rotated = MathUtils.MultiplyMatrixVector3(rotationMatrix, scaled);
+            // Step 3: Translate by adding world position
             return position + rotated;
         }
 
         /// <summary>
         /// Transforms a point from world space to local space
+        /// Formula: localPoint = scale^-1 * (rotation^-1 * (worldPoint - position))
+        /// Order: Inverse of SRT = T^-1 → R^-1 → S^-1
         /// </summary>
         public static Vector3 InverseTransformPoint(Vector3 worldPoint, Vector3 position, Quaternion rotation, Vector3 scale)
         {
-            // Inverse: un-translate, un-rotate, un-scale
+            // Step 1: Un-translate by subtracting world position
             Vector3 translated = worldPoint - position;
+            // Step 2: Un-rotate using inverse quaternion
             Vector3 rotated = Quaternion.Inverse(rotation) * translated;
+            // Step 3: Un-scale by component-wise division
             return MathUtils.ComponentDivide(rotated, scale);
         }
 
         /// <summary>
         /// Transforms a direction from local space to world space (ignores position and scale)
+        /// Directions don't have position and aren't affected by scale
+        /// Formula: worldDirection = rotation * localDirection
         /// </summary>
         public static Vector3 TransformDirection(Vector3 localDirection, Quaternion rotation)
         {
+            // Only apply rotation to direction vectors
             return rotation * localDirection;
         }
 
         /// <summary>
         /// Transforms a direction from world space to local space (ignores position and scale)
+        /// Formula: localDirection = rotation^-1 * worldDirection
         /// </summary>
         public static Vector3 InverseTransformDirection(Vector3 worldDirection, Quaternion rotation)
         {
+            // Apply inverse rotation to world direction
             return Quaternion.Inverse(rotation) * worldDirection;
         }
         #endregion
 
         #region Axis Extraction
         /// <summary>
-        /// Gets the right axis from a rotation quaternion
+        /// Gets the right axis (X-axis) from a rotation quaternion
+        /// Returns the direction this rotation considers "right" (positive X)
         /// </summary>
         public static Vector3 GetRight(Quaternion rotation)
         {
+            // Transform the unit X vector (1,0,0) by the rotation
             return rotation * Vector3.right;
         }
 
         /// <summary>
-        /// Gets the up axis from a rotation quaternion
+        /// Gets the up axis (Y-axis) from a rotation quaternion
+        /// Returns the direction this rotation considers "up" (positive Y)
         /// </summary>
         public static Vector3 GetUp(Quaternion rotation)
         {
+            // Transform the unit Y vector (0,1,0) by the rotation
             return rotation * Vector3.up;
         }
 
         /// <summary>
-        /// Gets the forward axis from a rotation quaternion
+        /// Gets the forward axis (Z-axis) from a rotation quaternion
+        /// Returns the direction this rotation considers "forward" (positive Z)
         /// </summary>
         public static Vector3 GetForward(Quaternion rotation)
         {
+            // Transform the unit Z vector (0,0,1) by the rotation
             return rotation * Vector3.forward;
         }
 
         /// <summary>
         /// Gets the right axis from a rotation matrix
+        /// Extracts the first column of the 3x3 rotation part
         /// </summary>
         public static Vector3 GetRightFromMatrix(Matrix4x4 matrix)
         {
+            // First column represents the transformed X-axis (right)
             return new Vector3(matrix.m00, matrix.m10, matrix.m20).normalized;
         }
 
         /// <summary>
         /// Gets the up axis from a rotation matrix
+        /// Extracts the second column of the 3x3 rotation part
         /// </summary>
         public static Vector3 GetUpFromMatrix(Matrix4x4 matrix)
         {
+            // Second column represents the transformed Y-axis (up)
             return new Vector3(matrix.m01, matrix.m11, matrix.m21).normalized;
         }
 
         /// <summary>
         /// Gets the forward axis from a rotation matrix
+        /// Extracts the third column of the 3x3 rotation part
         /// </summary>
         public static Vector3 GetForwardFromMatrix(Matrix4x4 matrix)
         {
+            // Third column represents the transformed Z-axis (forward)
             return new Vector3(matrix.m02, matrix.m12, matrix.m22).normalized;
         }
         #endregion
@@ -111,23 +143,31 @@ namespace PhysicsSimulation.Core
         #region Velocity Calculations
         /// <summary>
         /// Calculates velocity at a point on a rotating rigid body
-        /// v = v_center + ω × r
+        /// Formula: v = v_center + ω × r
+        /// Where r is the vector from center to point, and ω is angular velocity
         /// </summary>
         public static Vector3 GetVelocityAtPoint(Vector3 centerVelocity, Vector3 angularVelocity, Vector3 point, Vector3 centerPosition)
         {
+            // Calculate lever arm from center of mass to point
             Vector3 r = point - centerPosition;
+            // Linear velocity at point = center velocity + (angular velocity × lever arm)
+            // Cross product gives the tangential velocity component due to rotation
             return centerVelocity + Vector3.Cross(angularVelocity, r);
         }
 
         /// <summary>
         /// Calculates the relative velocity between two points on potentially different bodies
+        /// Used in collision detection to find the speed at which objects are approaching/separating
         /// </summary>
         public static Vector3 GetRelativeVelocityAtPoint(
-            Vector3 vel1, Vector3 angularVel1, Vector3 pos1, Vector3 contactPoint1,
-            Vector3 vel2, Vector3 angularVel2, Vector3 pos2, Vector3 contactPoint2)
+            Vector3 vel1, Vector3 angularVel1, Vector3 pos1, Vector3 contactPoint1,  // Body 1 state
+            Vector3 vel2, Vector3 angularVel2, Vector3 pos2, Vector3 contactPoint2)  // Body 2 state
         {
+            // Calculate absolute velocity at contact point on body 1
             Vector3 v1 = GetVelocityAtPoint(vel1, angularVel1, contactPoint1, pos1);
+            // Calculate absolute velocity at contact point on body 2
             Vector3 v2 = GetVelocityAtPoint(vel2, angularVel2, contactPoint2, pos2);
+            // Relative velocity = velocity of body 2 relative to body 1
             return v2 - v1;
         }
         #endregion
@@ -136,34 +176,43 @@ namespace PhysicsSimulation.Core
         /// <summary>
         /// Applies an impulse at a point on a rigid body
         /// Updates both linear and angular velocity
+        /// Formula:
+        ///   Δv = J / m (linear)
+        ///   Δω = I^-1 * (r × J) (angular)
         /// </summary>
         public static void ApplyImpulseAtPoint(
-            ref Vector3 velocity,
-            ref Vector3 angularVelocity,
-            Vector3 impulse,
-            Vector3 point,
-            Vector3 centerPosition,
-            float inverseMass,
-            Matrix4x4 inverseInertiaTensor)
+            ref Vector3 velocity,           // Linear velocity to update (by reference)
+            ref Vector3 angularVelocity,    // Angular velocity to update (by reference)
+            Vector3 impulse,                // Impulse vector to apply (force * time)
+            Vector3 point,                  // Point of application in world space
+            Vector3 centerPosition,         // Center of mass position
+            float inverseMass,              // 1 / mass (precomputed for efficiency)
+            Matrix4x4 inverseInertiaTensor) // I^-1 in world space
         {
-            // Linear velocity change
+            // Linear velocity change: Δv = J / m = J * (1/m)
             velocity += impulse * inverseMass;
 
-            // Angular velocity change
+            // Calculate lever arm from center of mass to application point
             Vector3 r = point - centerPosition;
+            // Calculate angular impulse: L = r × J (cross product gives torque impulse)
             Vector3 angularImpulse = Vector3.Cross(r, impulse);
+            // Angular velocity change: Δω = I^-1 * L
             angularVelocity += MathUtils.MultiplyMatrixVector3(inverseInertiaTensor, angularImpulse);
         }
 
         /// <summary>
         /// Applies an impulse to two bodies at a contact point
+        /// Uses Newton's third law: forces are equal and opposite
         /// </summary>
         public static void ApplyImpulseToBodies(
-            ref Vector3 vel1, ref Vector3 angularVel1, Vector3 pos1, float invMass1, Matrix4x4 invInertia1,
-            ref Vector3 vel2, ref Vector3 angularVel2, Vector3 pos2, float invMass2, Matrix4x4 invInertia2,
-            Vector3 impulse, Vector3 contactPoint)
+            ref Vector3 vel1, ref Vector3 angularVel1, Vector3 pos1, float invMass1, Matrix4x4 invInertia1,  // Body 1
+            ref Vector3 vel2, ref Vector3 angularVel2, Vector3 pos2, float invMass2, Matrix4x4 invInertia2,  // Body 2
+            Vector3 impulse,      // Impulse to apply to body 2 (negative for body 1)
+            Vector3 contactPoint) // Contact point in world space
         {
+            // Apply negative impulse to body 1 (action-reaction pair)
             ApplyImpulseAtPoint(ref vel1, ref angularVel1, -impulse, contactPoint, pos1, invMass1, invInertia1);
+            // Apply positive impulse to body 2
             ApplyImpulseAtPoint(ref vel2, ref angularVel2, impulse, contactPoint, pos2, invMass2, invInertia2);
         }
         #endregion

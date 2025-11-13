@@ -24,11 +24,15 @@
         <entry key="40d4d97f-0d9a-47bc-8b51-04e578d7e25f">
           <value>
             <set>
-              <option value="bfdcee7d-f370-4bc2-8609-0e462db69b5d" />
-              <option value="f08a821f-ef1f-4c79-9bb2-911a355ffd1c" />
-              <option value="b69bfa5b-66d4-4ea0-94ce-bc486898c7c8" />
-              <option value="ede97bca-d7e2-469c-896b-f532e8151f62" />
+              <option value="193e4a0a-330f-475b-bcae-ca5d211be104" />
               <option value="36d9abd4-5eb5-462c-b5fb-279d0667612a" />
+              <option value="3b1905e9-28f6-4646-962c-faec7b8d6b84" />
+              <option value="9a3c1f9f-fb2b-4778-ba64-82bb335a0822" />
+              <option value="ac94a8f9-4821-4af0-807f-e298ea1fa885" />
+              <option value="b69bfa5b-66d4-4ea0-94ce-bc486898c7c8" />
+              <option value="bfdcee7d-f370-4bc2-8609-0e462db69b5d" />
+              <option value="ede97bca-d7e2-469c-896b-f532e8151f62" />
+              <option value="f08a821f-ef1f-4c79-9bb2-911a355ffd1c" />
             </set>
           </value>
         </entry>
@@ -58,26 +62,18 @@
       <entry key="3c18ead8-0154-4f26-8e13-13c952cf2b9f" />
       <entry key="40d4d97f-0d9a-47bc-8b51-04e578d7e25f">
         <set>
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/VisualRenderer.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/yahya/RigidBody3DYahya.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/yahya/ImpactSphereYahya.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/RigidBody3D.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/ImpactSphere.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/ImpactSphereRayen.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/DynamicSphere3D.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/Rayen/StaticSpherePlatform.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/QuaternionRotation.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/TrailFollow.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/VisualRenderer.cs.meta" />
-          <option value="file://$PROJECT_DIR$/TRANSFORM_REFACTORING_SUMMARY.md" />
-          <option value="file://$PROJECT_DIR$/REFACTORING_COMPLETE.md" />
-          <option value="file://$PROJECT_DIR$/FIXES_COMPLETE.md" />
-          <option value="file://$PROJECT_DIR$/FINAL_STATUS.md" />
           <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMatrix.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMatrix.cs.meta" />
-          <option value="file://$PROJECT_DIR$/MANUAL_MESH_TRANSFORMATION.md" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMeshTransformTest.cs" />
-          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/ManualMeshTransformTest.cs.meta" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/QuaternionRotation.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/VisualRenderer.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/EulerRotation.cs" />
+          <option value="file://$PROJECT_DIR$/COMMENTING_GUIDE.md" />
+          <option value="file://$PROJECT_DIR$/PROJECT_SUMMARY.md" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/PhysicsConstants.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/MathUtils.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/RigidBody3D.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/IntegrationUtils.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Core/TransformUtils.cs" />
+          <option value="file://$PROJECT_DIR$/Assets/Scripts/Animations/Indiv_Work/aziz/ImpactSphere.cs" />
         </set>
       </entry>
       <entry key="704fdff2-2b47-4178-8c52-83229e77db39" />
