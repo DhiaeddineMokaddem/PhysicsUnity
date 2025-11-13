@@ -5,6 +5,7 @@ namespace PhysicsSimulation.Core
     /// <summary>
     /// Quaternion-based rotation implementation
     /// Provides stable rotation without gimbal lock
+    /// Uses VisualRenderer for visual updates only - no direct transform manipulation for rotation
     /// </summary>
     public class QuaternionRotation : MonoBehaviour
     {
@@ -22,12 +23,18 @@ namespace PhysicsSimulation.Core
         #region Private Fields
         private Quaternion currentRotation;
         private Vector3 accumulatedTorque = Vector3.zero;
+        private VisualRenderer visualRenderer;
         #endregion
 
         #region Unity Lifecycle
         void Start()
         {
-            currentRotation = transform.rotation;
+            visualRenderer = GetComponent<VisualRenderer>();
+            if (visualRenderer == null)
+            {
+                visualRenderer = gameObject.AddComponent<VisualRenderer>();
+            }
+            currentRotation = visualRenderer.GetRotation();
         }
 
         void FixedUpdate()
@@ -51,15 +58,21 @@ namespace PhysicsSimulation.Core
             // Clamp angular velocity
             angularVelocity = MathUtils.ClampMagnitude(angularVelocity, maxAngularSpeed);
             
+            // Get direction for integration
+            Vector3 rotationAxis = useLocalSpace ? TransformUtils.TransformDirection(angularVelocity, currentRotation) : angularVelocity;
+            
             // Integrate rotation using quaternions
             currentRotation = IntegrationUtils.IntegrateRotationQuaternion(
                 currentRotation,
-                useLocalSpace ? transform.TransformDirection(angularVelocity) : angularVelocity,
+                rotationAxis,
                 deltaTime
             );
             
-            // Apply to transform
-            transform.rotation = currentRotation;
+            // Apply to visual renderer
+            if (visualRenderer != null)
+            {
+                visualRenderer.UpdateRotation(currentRotation);
+            }
             
             // Clear accumulated torque
             accumulatedTorque = Vector3.zero;
@@ -73,7 +86,7 @@ namespace PhysicsSimulation.Core
         public void AddTorque(Vector3 torque, bool isLocalSpace = false)
         {
             if (isLocalSpace)
-                torque = transform.TransformDirection(torque);
+                torque = TransformUtils.TransformDirection(torque, currentRotation);
             
             accumulatedTorque += torque;
         }
@@ -84,7 +97,7 @@ namespace PhysicsSimulation.Core
         public void SetAngularVelocity(Vector3 velocity, bool isLocalSpace = false)
         {
             if (isLocalSpace)
-                velocity = transform.TransformDirection(velocity);
+                velocity = TransformUtils.TransformDirection(velocity, currentRotation);
             
             angularVelocity = velocity;
         }
@@ -94,7 +107,7 @@ namespace PhysicsSimulation.Core
         /// </summary>
         public Vector3 GetAngularVelocity(bool inLocalSpace = false)
         {
-            return inLocalSpace ? transform.InverseTransformDirection(angularVelocity) : angularVelocity;
+            return inLocalSpace ? TransformUtils.InverseTransformDirection(angularVelocity, currentRotation) : angularVelocity;
         }
 
         /// <summary>
@@ -112,11 +125,14 @@ namespace PhysicsSimulation.Core
         {
             if (!Application.isPlaying) return;
 
+            Vector3 drawPos = visualRenderer != null ? visualRenderer.GetPosition() : transform.position;
+            Quaternion drawRot = visualRenderer != null ? visualRenderer.GetRotation() : transform.rotation;
+
             // Draw angular velocity
-            DebugDrawUtils.DrawArrow(transform.position, angularVelocity, Color.blue, 0.3f);
+            DebugDrawUtils.DrawArrow(drawPos, angularVelocity, Color.blue, 0.3f);
             
             // Draw coordinate frame
-            DebugDrawUtils.DrawCoordinateFrame(transform.position, transform.rotation, 0.5f);
+            DebugDrawUtils.DrawCoordinateFrame(drawPos, drawRot, 0.5f);
         }
         #endregion
     }

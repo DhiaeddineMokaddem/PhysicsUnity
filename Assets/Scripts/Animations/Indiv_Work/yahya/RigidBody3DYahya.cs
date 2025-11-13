@@ -6,6 +6,7 @@ using PhysicsSimulation.Core;
 /// Stocke position, rotation, échelle manuellement sans dépendre de Transform
 /// FIXED: Uses Awake() for proper initialization order
 /// Refactored to use shared utilities from PhysicsUnity.Core
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// </summary>
 public class RigidBody3DYahya : MonoBehaviour
 {
@@ -38,16 +39,23 @@ public class RigidBody3DYahya : MonoBehaviour
     private Matrix4x4 inertiaTensor;
     private Matrix4x4 inertiaTensorInverse;
     private bool isInitialized = false;
+    private VisualRenderer visualRenderer;
     #endregion
 
     #region Initialization
     void Awake()
     {
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
         if (!isInitialized)
         {
-            position = transform.position;
-            rotation = transform.rotation;
-            scale = transform.localScale;
+            position = visualRenderer.GetPosition();
+            rotation = visualRenderer.GetRotation();
+            scale = visualRenderer.GetScale();
             isInitialized = true;
         }
         
@@ -67,9 +75,10 @@ public class RigidBody3DYahya : MonoBehaviour
         scale = scl;
         isInitialized = true;
         
-        transform.position = pos;
-        transform.rotation = rot;
-        transform.localScale = scl;
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdateTransform(pos, rot, scl);
+        }
     }
     #endregion
 
@@ -148,9 +157,10 @@ public class RigidBody3DYahya : MonoBehaviour
 
     public void UpdateVisualTransform()
     {
-        transform.position = position;
-        transform.rotation = rotation;
-        transform.localScale = scale;
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdateTransform(position, rotation, scale);
+        }
     }
     #endregion
 

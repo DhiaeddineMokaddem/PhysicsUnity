@@ -5,6 +5,8 @@ namespace PhysicsSimulation.Core
     /// <summary>
     /// Helper class for trail effects and motion tracking
     /// Useful for visualizing object motion and creating smooth following behaviors
+    /// NOTE: This is for camera/visual tracking utilities, not physics simulation.
+    /// For physics simulation, use VisualRenderer instead.
     /// </summary>
     public class TrailFollow : MonoBehaviour
     {

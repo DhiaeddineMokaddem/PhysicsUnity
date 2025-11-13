@@ -1,10 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 using PhysicsSimulation.Indiv_Work.Aziz;
+using PhysicsSimulation.Core;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Sphère qui impacte la structure de cubes - VERSION PURE MATH
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// FIXED: Proper initialization order using Awake()
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// </summary>
 public class ImpactSphereRayen : MonoBehaviour
 {
@@ -40,14 +44,21 @@ public class ImpactSphereRayen : MonoBehaviour
     private Vector3 startPosition;
     private HashSet<RigidBody3D> collidedThisFrame = new HashSet<RigidBody3D>();
     private int collisionCount = 0;
+    private VisualRenderer visualRenderer;
 
     /// <summary>
     /// FIXED: Use Awake() for immediate initialization
     /// </summary>
     void Awake()
     {
-        // PURE MATH: Initialiser la position depuis Transform
-        position = transform.position;
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
+        // PURE MATH: Initialiser la position depuis VisualRenderer
+        position = visualRenderer.GetPosition();
         startPosition = position;
     }
 
@@ -101,7 +112,10 @@ public class ImpactSphereRayen : MonoBehaviour
         position += velocity * deltaTime;
         
         // Mettre à jour le Transform Unity pour le rendu
-        UpdateVisualTransform();
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+        }
         
         DetectCollisions();
         HandleGroundCollision();
@@ -110,7 +124,10 @@ public class ImpactSphereRayen : MonoBehaviour
     // PURE MATH: Mise à jour du Transform Unity pour l'affichage
     void UpdateVisualTransform()
     {
-        transform.position = position;
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+        }
     }
 
     void DetectCollisions()
@@ -276,8 +293,8 @@ public class ImpactSphereRayen : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        // Utiliser la position stockée si en jeu, sinon Transform
-        Vector3 drawPos = Application.isPlaying ? position : transform.position;
+        // Utiliser la position stockée si en jeu, sinon VisualRenderer/transform
+        Vector3 drawPos = Application.isPlaying ? position : (visualRenderer != null ? visualRenderer.GetPosition() : transform.position);
         
         Gizmos.color = sphereColor;
         Gizmos.DrawWireSphere(drawPos, radius);
@@ -307,7 +324,7 @@ public class ImpactSphereRayen : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        Vector3 drawPos = Application.isPlaying ? position : transform.position;
+        Vector3 drawPos = Application.isPlaying ? position : (visualRenderer != null ? visualRenderer.GetPosition() : transform.position);
         
         Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
         Gizmos.DrawWireSphere(drawPos, breakRadius);

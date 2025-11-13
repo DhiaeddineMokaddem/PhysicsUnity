@@ -272,7 +272,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &575832488
 Transform:
   m_ObjectHideFlags: 0
@@ -303,7 +303,7 @@ MonoBehaviour:
   width: 3
   height: 3
   spacing: 0.05
-  cubeHeight: 0.3
+  cubeHeight: 0.2
   cubeWidth: 0.5
   cubeDepth: 0.5
   heightOffset: 3
@@ -459,7 +459,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1616025631
 Transform:
   m_ObjectHideFlags: 0
@@ -494,7 +494,7 @@ MonoBehaviour:
   gridY: 1
   gridZ: 6
   spacing: 1.05
-  cubeSize: {x: 1, y: 1, z: 1}
+  cubeSize: {x: 1, y: 0.2, z: 1}
   cubeMass: 1
   cubeMaterial: {fileID: 2100000, guid: 962d326bebfcebf4d9b89d489f120d07, type: 2}
   groundLevel: 0
@@ -503,7 +503,7 @@ MonoBehaviour:
   globalElasticity: 0.9
   createVisualGroundPlane: 1
   groundPlaneSize: {x: 30, y: 30}
-  groundColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+  groundColor: {r: 1, g: 0.93369824, b: 0, a: 1}
 --- !u!1 &1908028746
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,7 +520,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1908028747
 MonoBehaviour:
   m_ObjectHideFlags: 0

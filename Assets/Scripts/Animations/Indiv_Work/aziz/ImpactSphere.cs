@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using PhysicsSimulation.Indiv_Work.Aziz;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Sphère qui impacte la structure de cubes - VERSION PURE MATH
 /// FIXED: Proper initialization order using Awake()
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// </summary>
 public class ImpactSphere : MonoBehaviour
 {
@@ -40,14 +42,21 @@ public class ImpactSphere : MonoBehaviour
     private Vector3 startPosition;
     private HashSet<RigidBody3D> collidedThisFrame = new HashSet<RigidBody3D>();
     private int collisionCount = 0;
+    private VisualRenderer visualRenderer;
 
     /// <summary>
     /// FIXED: Use Awake() for immediate initialization
     /// </summary>
     void Awake()
     {
-        // PURE MATH: Initialiser la position depuis Transform
-        position = transform.position;
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
+        // PURE MATH: Initialiser la position depuis VisualRenderer
+        position = visualRenderer.GetPosition();
         startPosition = position;
     }
 
@@ -110,7 +119,10 @@ public class ImpactSphere : MonoBehaviour
     // PURE MATH: Mise à jour du Transform Unity pour l'affichage
     void UpdateVisualTransform()
     {
-        transform.position = position;
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+        }
     }
 
     void DetectCollisions()

@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using PhysicsSimulation.Core;
 
 /// <summary>
 /// Sphère qui impacte la structure de cubes - VERSION PURE MATH
 /// MODIFIÉ: Impact horizontal avec force importante
 /// FIXED: Collision detection and high-velocity impact
+/// Uses VisualRenderer for visual updates only - no direct transform manipulation
 /// </summary>
 public class ImpactSphereYahya : MonoBehaviour
 {
@@ -53,13 +55,20 @@ public class ImpactSphereYahya : MonoBehaviour
     private HashSet<RigidBody3DYahya> collidedThisFrame = new HashSet<RigidBody3DYahya>();
     private int collisionCount = 0;
     private bool isLaunched = false;
+    private VisualRenderer visualRenderer;
 
     void Awake()
     {
+        visualRenderer = GetComponent<VisualRenderer>();
+        if (visualRenderer == null)
+        {
+            visualRenderer = gameObject.AddComponent<VisualRenderer>();
+        }
+
         // Position de départ horizontale
         float xPos = launchFrom == LaunchSide.Right ? launchDistance : -launchDistance;
         position = new Vector3(xPos, launchHeight, 0f);
-        transform.position = position;
+        visualRenderer.UpdatePosition(position);
         startPosition = position;
         
         Debug.Log($"Sphère initialisée à position: {position}");
@@ -171,7 +180,10 @@ public class ImpactSphereYahya : MonoBehaviour
 
     void UpdateVisualTransform()
     {
-        transform.position = position;
+        if (visualRenderer != null)
+        {
+            visualRenderer.UpdatePosition(position);
+        }
     }
 
     void DetectCollisions()
