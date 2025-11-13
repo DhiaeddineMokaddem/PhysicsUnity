@@ -220,6 +220,59 @@ namespace PhysicsUnity.Core
         }
 
         /// <summary>
+        /// Dot product without calling Vector3.Dot from gameplay code
+        /// </summary>
+        public static float Dot(Vector3 a, Vector3 b)
+        {
+            return a.x * b.x + a.y * b.y + a.z * b.z;
+        }
+
+        /// <summary>
+        /// Linear interpolation without calling Vector3.Lerp from gameplay code
+        /// </summary>
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+        {
+            float ct = Mathf.Clamp01(t);
+            return new Vector3(
+                a.x + (b.x - a.x) * ct,
+                a.y + (b.y - a.y) * ct,
+                a.z + (b.z - a.z) * ct
+            );
+        }
+
+        /// <summary>
+        /// Returns squared magnitude of a vector
+        /// </summary>
+        public static float SqrMagnitude(Vector3 v)
+        {
+            return v.x * v.x + v.y * v.y + v.z * v.z;
+        }
+
+        /// <summary>
+        /// Returns magnitude of a vector (sqrt of squared magnitude)
+        /// </summary>
+        public static float Magnitude(Vector3 v)
+        {
+            return Mathf.Sqrt(SqrMagnitude(v));
+        }
+
+        /// <summary>
+        /// Returns squared distance between two vectors
+        /// </summary>
+        public static float SqrDistance(Vector3 a, Vector3 b)
+        {
+            return SqrMagnitude(new Vector3(a.x - b.x, a.y - b.y, a.z - b.z));
+        }
+
+        /// <summary>
+        /// Returns distance between two vectors
+        /// </summary>
+        public static float Distance(Vector3 a, Vector3 b)
+        {
+            return Mathf.Sqrt(SqrDistance(a, b));
+        }
+        
+        /// <summary>
         /// Clamps the magnitude of a vector
         /// </summary>
         public static Vector3 ClampMagnitude(Vector3 vector, float maxMagnitude)
